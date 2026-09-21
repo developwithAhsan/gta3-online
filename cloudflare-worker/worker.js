@@ -1,36 +1,62 @@
 /**
  * GTA III asset proxy for the browser OPFS downloader.
  *
- * Why this exists:
- * Google Drive direct-download URLs can work when opened in the address bar but
- * still reject cross-origin fetch() from GitHub Pages. A Worker fetches the
- * authorized archive server-side and adds the CORS/range headers the browser
- * downloader needs.
+ * Google Drive can return a virus-scan / "Download anyway" HTML page for large
+ * files. This Worker resolves that confirmation page server-side, then streams
+ * the ZIP with CORS + Range headers so GitHub Pages can save it into OPFS.
  */
 
-const UPSTREAM_URL = "https://drive.usercontent.google.com/download?id=1CI50_lKEVQ22gjl2BdZwjxeJ4J_tJ_vL&export=download&authuser=8&confirm=t&uuid=a361c096-5cd6-4110-b885-f7179149c3bb&at=AMrWOn0-CjE2VosXilWxxD6mBvg8%3A1789910493665";
+const FILE_ID = "1CI50_lKEVQ22gjl2BdZwjxeJ4J_tJ_vL";
+const BASE_DOWNLOAD_URL =
+  `https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download&confirm=t`;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
   "Access-Control-Allow-Headers": "Range, Content-Type",
-  "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, Content-Type",
+  "Access-Control-Expose-Headers":
+    "Content-Length, Content-Range, Accept-Ranges, Content-Type",
   "Cross-Origin-Resource-Policy": "cross-origin",
   "Cache-Control": "no-store",
 };
 
-function proxyHeaders(upstream, { forceLength = null } = {}) {
-  const headers = new Headers(CORS);
-  headers.set("Content-Type", upstream.headers.get("content-type") || "application/zip");
-  headers.set("Accept-Ranges", "bytes");
+function isHtml(response) {
+  return (response.headers.get("content-type") || "")
+    .toLowerCase()
+    .includes("text/html");
+}
 
-  const contentRange = upstream.headers.get("content-range");
-  if (contentRange) headers.set("Content-Range", contentRange);
+function decodeHtml(value) {
+  return String(value || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
 
-  const contentLength = forceLength ?? upstream.headers.get("content-length");
-  if (contentLength) headers.set("Content-Length", String(contentLength));
+function parseDownloadForm(html) {
+  const formMatch = html.match(
+    /<form[^>]+action=["']([^"']+)["'][^>]*>([\s\S]*?)<\/form>/i,
+  );
+  if (!formMatch) return null;
 
-  return headers;
+  const action = decodeHtml(formMatch[1]);
+  const body = formMatch[2];
+  const url = new URL(action);
+
+  const inputRe =
+    /<input[^>]+name=["']([^"']+)["'][^>]+value=["']([^"']*)["'][^>]*>/gi;
+  let match;
+  while ((match = inputRe.exec(body))) {
+    url.searchParams.set(decodeHtml(match[1]), decodeHtml(match[2]));
+  }
+
+  if (!url.searchParams.has("id")) url.searchParams.set("id", FILE_ID);
+  if (!url.searchParams.has("export")) url.searchParams.set("export", "download");
+  if (!url.searchParams.has("confirm")) url.searchParams.set("confirm", "t");
+
+  return url.toString();
 }
 
 function totalFromContentRange(value) {
@@ -38,19 +64,95 @@ function totalFromContentRange(value) {
   return match ? Number(match[1]) : 0;
 }
 
-async function fetchUpstream(range = null) {
-  const headers = {
-    "Accept": "application/octet-stream, application/zip, */*",
-    "User-Agent": "Mozilla/5.0",
-  };
-  if (range) headers.Range = range;
+function proxyHeaders(upstream, { forceLength = null } = {}) {
+  const headers = new Headers(CORS);
+  headers.set(
+    "Content-Type",
+    upstream.headers.get("content-type") || "application/zip",
+  );
+  headers.set("Accept-Ranges", "bytes");
 
-  return fetch(UPSTREAM_URL, {
+  const contentRange = upstream.headers.get("content-range");
+  if (contentRange) headers.set("Content-Range", contentRange);
+
+  const contentLength =
+    forceLength ?? upstream.headers.get("content-length");
+  if (contentLength) headers.set("Content-Length", String(contentLength));
+
+  const disposition = upstream.headers.get("content-disposition");
+  if (disposition) headers.set("Content-Disposition", disposition);
+
+  return headers;
+}
+
+function forwardCookie(response) {
+  return response.headers.get("set-cookie") || "";
+}
+
+async function rawFetch(url, range = null, cookie = "") {
+  const headers = new Headers({
+    Accept: "application/octet-stream, application/zip, */*",
+    "User-Agent": "Mozilla/5.0",
+  });
+  if (range) headers.set("Range", range);
+  if (cookie) headers.set("Cookie", cookie);
+
+  return fetch(url, {
     method: "GET",
     headers,
     redirect: "follow",
     cf: { cacheTtl: 0, cacheEverything: false },
   });
+}
+
+async function fetchDriveFile(range = null) {
+  // First try the stable file-ID URL. Do not use temporary authuser/uuid/at
+  // parameters copied from one browser session.
+  let response = await rawFetch(BASE_DOWNLOAD_URL, range);
+
+  if (!isHtml(response)) return response;
+
+  // Google Drive often returns a small virus-scan warning page for large files.
+  // Parse its "Download anyway" form and make the second request server-side.
+  const cookie = forwardCookie(response);
+  const html = await response.text();
+  const confirmedUrl = parseDownloadForm(html);
+
+  if (!confirmedUrl) {
+    const lower = html.toLowerCase();
+    if (
+      lower.includes("sign in") ||
+      lower.includes("request access") ||
+      lower.includes("you need access")
+    ) {
+      throw new Error(
+        'Google Drive file is not publicly downloadable. Set sharing to "Anyone with the link".',
+      );
+    }
+    if (lower.includes("quota") || lower.includes("too many users")) {
+      throw new Error("Google Drive download quota has been exceeded.");
+    }
+    throw new Error(
+      "Google Drive returned HTML but no Download anyway form was found.",
+    );
+  }
+
+  response = await rawFetch(confirmedUrl, range, cookie);
+
+  if (isHtml(response)) {
+    const secondHtml = await response.text();
+    if (
+      secondHtml.toLowerCase().includes("quota") ||
+      secondHtml.toLowerCase().includes("too many users")
+    ) {
+      throw new Error("Google Drive download quota has been exceeded.");
+    }
+    throw new Error(
+      "Google Drive still returned HTML after the confirmation request.",
+    );
+  }
+
+  return response;
 }
 
 export default {
@@ -60,27 +162,22 @@ export default {
     }
 
     if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Method not allowed", { status: 405, headers: CORS });
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: CORS,
+      });
     }
 
     try {
       if (request.method === "HEAD") {
-        // Google Drive HEAD responses are not always useful. Request one byte so
-        // Content-Range can reveal the real total archive size.
-        const probe = await fetchUpstream("bytes=0-0");
-        if (!probe.ok && probe.status !== 206) {
-          return new Response(`Upstream probe failed: HTTP ${probe.status}`, {
-            status: 502,
-            headers: CORS,
-          });
-        }
+        // Probe one byte because Drive's normal HEAD can omit the useful size.
+        const probe = await fetchDriveFile("bytes=0-0");
 
-        const ct = probe.headers.get("content-type") || "";
-        if (ct.includes("text/html")) {
-          return new Response("Upstream returned HTML instead of the ZIP archive.", {
-            status: 502,
-            headers: CORS,
-          });
+        if (!probe.ok && probe.status !== 206) {
+          return new Response(
+            `Upstream probe failed: HTTP ${probe.status}`,
+            { status: 502, headers: CORS },
+          );
         }
 
         const total =
@@ -89,26 +186,20 @@ export default {
 
         return new Response(null, {
           status: 200,
-          headers: proxyHeaders(probe, { forceLength: total || null }),
+          headers: proxyHeaders(probe, {
+            forceLength: total || null,
+          }),
         });
       }
 
       const range = request.headers.get("Range");
-      const upstream = await fetchUpstream(range);
+      const upstream = await fetchDriveFile(range);
 
       if (!upstream.ok && upstream.status !== 206) {
-        return new Response(`Upstream download failed: HTTP ${upstream.status}`, {
-          status: 502,
-          headers: CORS,
-        });
-      }
-
-      const ct = upstream.headers.get("content-type") || "";
-      if (ct.includes("text/html")) {
-        return new Response("Upstream returned HTML instead of the ZIP archive.", {
-          status: 502,
-          headers: CORS,
-        });
+        return new Response(
+          `Upstream download failed: HTTP ${upstream.status}`,
+          { status: 502, headers: CORS },
+        );
       }
 
       return new Response(upstream.body, {
@@ -116,10 +207,10 @@ export default {
         headers: proxyHeaders(upstream),
       });
     } catch (err) {
-      return new Response(`Proxy fetch failed: ${err?.message || err}`, {
-        status: 502,
-        headers: CORS,
-      });
+      return new Response(
+        `Proxy fetch failed: ${err?.message || err}`,
+        { status: 502, headers: CORS },
+      );
     }
   },
 };
