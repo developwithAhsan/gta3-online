@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   mirror:
-    if: github.event.head_commit.message == 'Bootstrap GTA3-WASM mirror'
+    if: github.event.head_commit.message == 'Bootstrap GTA3-WASM mirror' || github.event.head_commit.message == 'Fix GTA3-WASM mirror bootstrap'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout destination repository
@@ -19,17 +19,20 @@ jobs:
 
       - name: Clone latest GTA3-WASM source
         run: |
-          git clone --depth 1 --branch main https://github.com/developwithAhsan/GTA3-WASM.git source
-          git -C source rev-parse HEAD
+          SRC="$RUNNER_TEMP/gta3-wasm-source"
+          rm -rf "$SRC"
+          git clone --depth 1 --branch main https://github.com/developwithAhsan/GTA3-WASM.git "$SRC"
+          git -C "$SRC" rev-parse HEAD
 
       - name: Mirror source tree
         run: |
-          SUBMODULE_SHA="$(git -C source ls-tree HEAD emsdk | awk '{print $3}')"
+          SRC="$RUNNER_TEMP/gta3-wasm-source"
+          SUBMODULE_SHA="$(git -C "$SRC" ls-tree HEAD emsdk | awk '{print $3}')"
           rsync -a --delete \
             --exclude='.git/' \
             --exclude='.github/workflows/' \
-            source/ ./
-          rm -rf source emsdk
+            "$SRC"/ ./
+          rm -rf emsdk
 
           git add -A -- . ':(exclude).github/workflows/**'
           if [ -n "$SUBMODULE_SHA" ]; then
