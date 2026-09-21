@@ -68,19 +68,14 @@
 
       <section class="game-control-card" id="play">
         <div class="primary-play-row">
-          <button id="download-play-btn" class="vc-btn-play" type="button">DOWNLOAD &amp; PLAY</button>
+          <button id="play-game-btn" class="vc-btn-play" type="button" disabled>PLAY GAME</button>
         </div>
+
+        <p class="vc-note play-note"><strong>Play in full screen:</strong> Click PLAY GAME to open the dedicated game window. Download, cache, extraction and engine loading progress will appear only inside that full-screen window.</p>
 
         <div class="secondary-actions">
           <button id="pick-zip-btn" class="vc-btn-secondary" type="button">SELECT &amp; CACHE ZIP</button>
           <button id="pick-folder-btn" class="vc-btn-secondary" type="button">SELECT GTA III FOLDER</button>
-        </div>
-
-        <div class="utility-grid">
-          <button id="diagnostics-btn" class="vc-action-btn" type="button">DIAGNOSTICS</button>
-          <button id="input-debug-btn" class="vc-action-btn" type="button">INPUT</button>
-          <button id="fullscreen-btn" class="vc-action-btn" type="button">FULLSCREEN</button>
-          <button id="share-btn" class="vc-action-btn" type="button">SHARE</button>
         </div>
 
         <div class="cache-row">
@@ -90,11 +85,24 @@
           </label>
         </div>
 
-        <p class="vc-note"><strong>One-time setup:</strong> Download &amp; Play stores the configured authorized ZIP in your browser's private OPFS storage. When the cache remains available, future visits skip the full network download.</p>
-        <p class="vc-note">The cached ZIP still needs to be read and extracted into the re3 runtime for each fresh session because the current engine reads its game data from Emscripten's virtual filesystem.</p>
+        <button id="download-play-btn" class="hidden-runtime-trigger" type="button" aria-hidden="true" tabindex="-1">Download &amp; Play</button>
       </section>
 
-      <section class="game-stage-card">
+      <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
+        <div class="game-window-toolbar">
+          <div class="game-window-status">
+            <span class="game-window-brand">GTA III</span>
+            <span id="game-window-phase">LOADING</span>
+            <span class="game-window-time">TIME <b id="loading-timer">00:00</b></span>
+          </div>
+          <div class="game-window-actions">
+            <button id="diagnostics-btn" type="button">Diagnostics</button>
+            <button id="input-debug-btn" type="button">Input</button>
+            <button id="fullscreen-btn" type="button">Fullscreen</button>
+            <button id="game-window-close" type="button">Close</button>
+          </div>
+        </div>
+        <div class="game-stage-card">
         <section id="viewport" aria-label="GTA III game viewport">
           <div id="error-banner">
             <div class="error-title">Runtime error</div>
@@ -117,6 +125,7 @@
                 <span id="loading-percent">Loading…</span>
                 <span id="loading-stage">WASM</span>
               </div>
+              <div class="loading-time-line">Elapsed loading time <strong id="loading-timer-card">00:00</strong></div>
             </div>
           </div>
 
@@ -214,6 +223,7 @@
             <pre id="log-output"></pre>
           </div>
         </aside>
+        </div>
       </section>
 
       <div class="content-grid">
@@ -332,25 +342,120 @@
   <script src="boot.js?v=10"></script>
   <script src="launcher.js?v=20"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const shareBtn = document.getElementById("share-btn");
-      if (shareBtn) {
-        shareBtn.addEventListener("click", async () => {
-          if (navigator.share) {
-            try {
-              await navigator.share({ title: "GTA III Browser Edition", url: location.href });
-            } catch {}
-          } else {
-            try {
-              await navigator.clipboard.writeText(location.href);
-              const old = shareBtn.textContent;
-              shareBtn.textContent = "COPIED";
-              setTimeout(() => { shareBtn.textContent = old; }, 1500);
-            } catch {}
-          }
-        });
+    (() => {
+      const playBtn = document.getElementById("play-game-btn");
+      const internalPlayBtn = document.getElementById("download-play-btn");
+      const gameWindow = document.getElementById("game-window");
+      const closeBtn = document.getElementById("game-window-close");
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const loadingTitle = document.getElementById("loading-title");
+      const loadingStatus = document.getElementById("loading-status");
+      const loadingDetail = document.getElementById("loading-detail");
+      const loadingTimer = document.getElementById("loading-timer");
+      const loadingTimerCard = document.getElementById("loading-timer-card");
+      const phase = document.getElementById("game-window-phase");
+      const statusText = document.getElementById("status-text");
+      const errorBanner = document.getElementById("error-banner");
+
+      let startedAt = 0;
+      let timerId = 0;
+      let launchStarted = false;
+
+      function formatElapsed(ms) {
+        const total = Math.max(0, Math.floor(ms / 1000));
+        const minutes = Math.floor(total / 60);
+        const seconds = total % 60;
+        return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
       }
-    });
+
+      function paintTimer() {
+        if (!startedAt) return;
+        const value = formatElapsed(performance.now() - startedAt);
+        loadingTimer.textContent = value;
+        loadingTimerCard.textContent = value;
+      }
+
+      function startTimer() {
+        startedAt = performance.now();
+        paintTimer();
+        clearInterval(timerId);
+        timerId = window.setInterval(paintTimer, 250);
+      }
+
+      function stopTimer() {
+        paintTimer();
+        clearInterval(timerId);
+        timerId = 0;
+      }
+
+      async function openGameWindow() {
+        gameWindow.classList.remove("hidden");
+        document.body.classList.add("game-window-open");
+        loadingOverlay.classList.remove("hidden");
+        loadingTitle.textContent = "LOADING GTA III";
+        loadingStatus.textContent = "Preparing game files…";
+        loadingDetail.textContent = "Checking local cache and preparing Liberty City.";
+        phase.textContent = "LOADING";
+        startTimer();
+
+        try {
+          if (!document.fullscreenElement && gameWindow.requestFullscreen) {
+            await gameWindow.requestFullscreen();
+          }
+        } catch {
+          // CSS full-screen window remains active if browser fullscreen is denied.
+        }
+      }
+
+      function closeGameWindow() {
+        stopTimer();
+        gameWindow.classList.add("hidden");
+        document.body.classList.remove("game-window-open");
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      window.addEventListener("gta3-launcher-ready", () => {
+        playBtn.disabled = false;
+      });
+
+      playBtn.addEventListener("click", async () => {
+        if (launchStarted) {
+          gameWindow.classList.remove("hidden");
+          document.body.classList.add("game-window-open");
+          return;
+        }
+        launchStarted = true;
+        playBtn.disabled = true;
+        await openGameWindow();
+        internalPlayBtn.click();
+      });
+
+      closeBtn.addEventListener("click", closeGameWindow);
+
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement && !gameWindow.classList.contains("hidden")) {
+          // Keep the dedicated CSS game window open even after Esc exits native fullscreen.
+          document.body.classList.add("game-window-open");
+        }
+      });
+
+      const stateObserver = new MutationObserver(() => {
+        const text = (statusText.textContent || "").toLowerCase();
+        if (text.includes("main menu ready") || text.includes("gta iii running")) {
+          phase.textContent = "READY";
+          stopTimer();
+        } else if (errorBanner.classList.contains("visible")) {
+          phase.textContent = "ERROR";
+          stopTimer();
+        } else if (launchStarted) {
+          phase.textContent = "LOADING";
+        }
+      });
+      stateObserver.observe(statusText, { childList: true, subtree: true });
+      stateObserver.observe(errorBanner, { attributes: true, attributeFilter: ["class"] });
+    })();
   </script>
 </body>
 </html>

@@ -249,3 +249,90 @@ a:hover{color:#9bc4ef}
   .assets-card h2{font-size:21px}
   .hero-copy>strong{font-size:70px}
 }
+
+
+/* Dedicated full-screen game window */
+.hidden-runtime-trigger{display:none!important}
+body.game-window-open{overflow:hidden}
+.game-window{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  flex-direction:column;
+  width:100vw;
+  height:100vh;
+  background:#000;
+}
+.game-window.hidden{display:none!important}
+.game-window-toolbar{
+  flex:0 0 48px;
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:6px 10px;
+  border-bottom:1px solid #26364a;
+  background:#0f151e;
+  color:#cbd6e1;
+}
+.game-window-status,.game-window-actions{display:flex;align-items:center;gap:9px;min-width:0}
+.game-window-brand{
+  color:#fff;
+  font-family:"Bebas Neue",Impact,sans-serif;
+  font-size:22px;
+  letter-spacing:.06em;
+}
+#game-window-phase{
+  padding:2px 7px;
+  border:1px solid #344a63;
+  color:#91a9c2;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+.game-window-time{color:#637b92;font-size:9px;letter-spacing:.09em;white-space:nowrap}
+.game-window-time b{color:#d8e3ed;font-variant-numeric:tabular-nums}
+.game-window-actions button{
+  min-height:34px;
+  padding:6px 9px;
+  border:1px solid #2a3a52;
+  background:#172131;
+  color:#c8d4df;
+  font-size:10px;
+}
+.game-window-actions button:hover{border-color:#48617e;background:#202e40}
+.game-window>.game-stage-card{
+  flex:1 1 auto;
+  min-height:0;
+  margin:0;
+  border:0;
+  box-shadow:none;
+}
+.game-window #viewport{
+  width:100%;
+  height:100%;
+  min-height:0;
+}
+.loading-time-line{
+  margin-top:10px;
+  color:#657d95;
+  font-size:10px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.loading-time-line strong{
+  margin-left:6px;
+  color:#d7e2ec;
+  font-variant-numeric:tabular-nums;
+}
+.play-note{text-align:center}
+#play-game-btn{font-size:1rem;padding:15px 24px}
+@media(max-width:700px){
+  .game-window-toolbar{min-height:54px;flex:0 0 auto;align-items:flex-start}
+  .game-window-status{flex-wrap:wrap}
+  .game-window-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  .game-window-actions button{min-height:32px;padding:5px 7px;font-size:9px}
+  .game-window-time{display:none}
+}

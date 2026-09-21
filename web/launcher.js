@@ -796,9 +796,9 @@
 			});
 		}
 
-		// Persistent OPFS archive cache. The compressed ZIP is stored once and
-		// extracted into MEMFS on each visit because this re3 build reads from
-		// Emscripten FS directly.
+		// Persistent OPFS archive cache status only. Do not extract or download
+		// game data during ordinary page load. The user explicitly starts that
+		// work by pressing PLAY GAME in the site UI.
 		if (window.OPFSAssetCache?.supported()) {
 			try {
 				await OPFSAssetCache.requestPersistence();
@@ -806,26 +806,18 @@
 				setDiag("Persistent OPFS ZIP cache", cacheStatus.ready ? formatBytes(cacheStatus.size) : "not installed", cacheStatus.ready ? true : "warn");
 
 				if (cacheStatus.ready) {
-					els.assetsStatus.textContent = `Cached GTA III ZIP found (${formatBytes(cacheStatus.size)}). Loading from browser storage…`;
+					els.assetsStatus.textContent = `Cached GTA III ZIP ready (${formatBytes(cacheStatus.size)}). Press PLAY GAME to load it.`;
 					els.assetsStatus.dataset.ok = "true";
-					const cachedZip = await OPFSAssetCache.getArchiveFile();
-					await extractCachedZipToRuntime(instance, mountPoint, manifest, cachedZip, "cached GTA III ZIP");
 				} else {
-					const cfg = window.GTA3_ASSET_CONFIG || {};
-					if (cfg.autoInstall && cfg.archiveUrl) {
-						await installRemoteArchiveToOPFS(cfg.archiveUrl);
-						const cachedZip = await OPFSAssetCache.getArchiveFile();
-						await extractCachedZipToRuntime(instance, mountPoint, manifest, cachedZip, "downloaded GTA III ZIP");
-					}
+					els.assetsStatus.textContent = "No cached GTA III archive yet. PLAY GAME will download and cache it.";
+					delete els.assetsStatus.dataset.ok;
 				}
 			} catch (err) {
-				log(`[assets] OPFS cache restore/install failed: ${err}`, "stderr");
-				els.assetsStatus.textContent = "Persistent cache could not be loaded. You can still select a local GTA III ZIP or folder.";
+				log(`[assets] OPFS cache status check failed: ${err}`, "stderr");
+				els.assetsStatus.textContent = "Persistent cache status could not be checked. PLAY GAME can still retry.";
 				els.assetsStatus.dataset.ok = "false";
-				hideLoadingOverlay();
 			}
 		}
-
 
 		els.assetsOverlay.classList.remove("hidden");
 	}
@@ -1140,6 +1132,8 @@
 					showFatalError("Engine startup failed unexpectedly", err);
 				});
 		});
+
+		window.dispatchEvent(new CustomEvent("gta3-launcher-ready"));
 	}
 
 	window.addEventListener("error", (event) => {
