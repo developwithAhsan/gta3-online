@@ -128,7 +128,8 @@ static bool g_re3LastFrameLimiterWillCall = false;
 // "browser vsync if available" was explicitly not what was wanted here. This
 // fixed budget replaces that native prefs-driven check, at the two call sites
 // below (GS_PLAYING_GAME's Idle() and GS_FRONTEND's FrontendIdle()).
-static const double RE3_EMSCRIPTEN_FRAME_BUDGET_MS = 1000.0 / 50.0; // 20.0ms
+static double g_re3FrameBudgetMs = 1000.0 / 50.0; // default 50 FPS; <= 0 means uncapped
+static int g_re3FpsLimit = 50;
 
 // A first version of this gate compared CTimer's own "time since the last
 // CTimer::Update()" against the budget and, when it passed, let CTimer::Update()
@@ -153,18 +154,36 @@ static double g_re3NextFrameTimeMs = 0.0;
 static bool
 re3EmscriptenFrameDue()
 {
+	if (g_re3FrameBudgetMs <= 0.0)
+		return true;
+
 	double nowMs = (double)RsTimer();
 	if (g_re3NextFrameTimeMs <= 0.0)
 		g_re3NextFrameTimeMs = nowMs;
 	if (nowMs < g_re3NextFrameTimeMs)
 		return false;
-	g_re3NextFrameTimeMs += RE3_EMSCRIPTEN_FRAME_BUDGET_MS;
+	g_re3NextFrameTimeMs += g_re3FrameBudgetMs;
 	// Long stall (backgrounded tab, suspended rAF): don't let the schedule
 	// fall so far behind that it tries to burst-fire makeup frames once
 	// ticking resumes -- just resume a fresh one-budget cadence from now.
-	if (g_re3NextFrameTimeMs < nowMs - RE3_EMSCRIPTEN_FRAME_BUDGET_MS)
+	if (g_re3NextFrameTimeMs < nowMs - g_re3FrameBudgetMs)
 		g_re3NextFrameTimeMs = nowMs;
 	return true;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void
+re3_SetFPSLimit(int fps)
+{
+	if (fps <= 0) {
+		g_re3FpsLimit = 0;
+		g_re3FrameBudgetMs = 0.0;
+	} else {
+		if (fps > 120)
+			fps = 120;
+		g_re3FpsLimit = fps;
+		g_re3FrameBudgetMs = 1000.0 / (double)fps;
+	}
+	g_re3NextFrameTimeMs = 0.0;
 }
 
 // Raw tick() invocation counter -- unconditional, counts every single call

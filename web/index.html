@@ -71,21 +71,44 @@
           <button id="play-game-btn" class="vc-btn-play" type="button" disabled>PLAY GAME</button>
         </div>
 
-        <p class="vc-note play-note"><strong>Play in full screen:</strong> Click PLAY GAME to open the dedicated game window. Download, cache, extraction and engine loading progress will appear only inside that full-screen window.</p>
+        <div class="player-settings">
+          <div class="player-setting-row">
+            <span>
+              <strong>TOUCH CONTROLS</strong>
+              <small>On-screen controls preference</small>
+            </span>
+            <button id="touch-controls-toggle" class="setting-toggle" type="button" data-state="auto">AUTO</button>
+          </div>
 
-        <div class="secondary-actions">
-          <button id="pick-zip-btn" class="vc-btn-secondary" type="button">SELECT &amp; CACHE ZIP</button>
-          <button id="pick-folder-btn" class="vc-btn-secondary" type="button">SELECT GTA III FOLDER</button>
-        </div>
-
-        <div class="cache-row">
-          <button id="clear-cache-btn" class="vc-reset-btn" type="button">Reset cached game archive</button>
-          <label id="debug-mode-toggle" class="debug-toggle">
-            <input type="checkbox" id="debug-mode-checkbox"> Debug mode
+          <label class="player-setting-row" for="fps-limit-input">
+            <span>
+              <strong>FPS LIMIT</strong>
+              <small>0 = unlimited, 30–60 recommended</small>
+            </span>
+            <input id="fps-limit-input" class="fps-limit-input" type="number" value="50" min="0" max="120" step="10" inputmode="numeric" aria-label="FPS limit">
           </label>
+
+          <div class="player-setting-row">
+            <span>
+              <strong>FULLSCREEN</strong>
+              <small>Expand the game to your display</small>
+            </span>
+            <button id="fullscreen-btn" class="setting-toggle" type="button">FULLSCREEN</button>
+          </div>
         </div>
 
-        <button id="download-play-btn" class="hidden-runtime-trigger" type="button" aria-hidden="true" tabindex="-1">Download &amp; Play</button>
+        <p class="vc-note play-note">Press PLAY GAME to open the dedicated full-screen GTA III window. Loading, download, cache and extraction progress appear only inside the game window.</p>
+
+        <!-- Internal runtime hooks kept hidden so existing launcher code remains stable. -->
+        <div class="runtime-hooks" aria-hidden="true">
+          <button id="download-play-btn" type="button" tabindex="-1">Download &amp; Play</button>
+          <button id="pick-zip-btn" type="button" tabindex="-1">Select ZIP</button>
+          <button id="pick-folder-btn" type="button" tabindex="-1">Select Folder</button>
+          <button id="clear-cache-btn" type="button" tabindex="-1">Clear Cache</button>
+          <button id="diagnostics-btn" type="button" tabindex="-1">Diagnostics</button>
+          <button id="input-debug-btn" type="button" tabindex="-1">Input</button>
+          <label id="debug-mode-toggle"><input type="checkbox" id="debug-mode-checkbox" tabindex="-1"> Debug</label>
+        </div>
       </section>
 
       <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
@@ -96,9 +119,7 @@
             <span class="game-window-time">TIME <b id="loading-timer">00:00</b></span>
           </div>
           <div class="game-window-actions">
-            <button id="diagnostics-btn" type="button">Diagnostics</button>
-            <button id="input-debug-btn" type="button">Input</button>
-            <button id="fullscreen-btn" type="button">Fullscreen</button>
+            <button id="game-fullscreen-btn" type="button">Fullscreen</button>
             <button id="game-window-close" type="button">Close</button>
           </div>
         </div>
@@ -347,6 +368,9 @@
       const internalPlayBtn = document.getElementById("download-play-btn");
       const gameWindow = document.getElementById("game-window");
       const closeBtn = document.getElementById("game-window-close");
+      const gameFullscreenBtn = document.getElementById("game-fullscreen-btn");
+      const touchBtn = document.getElementById("touch-controls-toggle");
+      const fpsInput = document.getElementById("fps-limit-input");
       const loadingOverlay = document.getElementById("loading-overlay");
       const loadingTitle = document.getElementById("loading-title");
       const loadingStatus = document.getElementById("loading-status");
@@ -360,6 +384,28 @@
       let startedAt = 0;
       let timerId = 0;
       let launchStarted = false;
+      let fpsSetter = null;
+
+      const touchStates = ["auto", "on", "off"];
+      const touchLabels = { auto: "AUTO", on: "ON", off: "OFF" };
+
+      function applyTouchState(state) {
+        const next = touchStates.includes(state) ? state : "auto";
+        touchBtn.dataset.state = next;
+        touchBtn.textContent = touchLabels[next];
+        window.GTA3_TOUCH_CONTROLS_MODE = next;
+        try { localStorage.setItem("gta3.touchControls", next); } catch {}
+        window.dispatchEvent(new CustomEvent("gta3-touch-controls-change", { detail: { mode: next } }));
+      }
+
+      function applyFpsLimit() {
+        let value = Number.parseInt(fpsInput.value, 10);
+        if (!Number.isFinite(value)) value = 50;
+        value = Math.max(0, Math.min(120, value));
+        fpsInput.value = String(value);
+        try { localStorage.setItem("gta3.fpsLimit", String(value)); } catch {}
+        if (fpsSetter) fpsSetter(value);
+      }
 
       function formatElapsed(ms) {
         const total = Math.max(0, Math.floor(ms / 1000));
@@ -419,10 +465,45 @@
 
       window.addEventListener("gta3-launcher-ready", () => {
         playBtn.disabled = false;
+        try {
+          if (window.re3Module) {
+            fpsSetter = window.re3Module.cwrap("re3_SetFPSLimit", null, ["number"]);
+            applyFpsLimit();
+          }
+        } catch {
+          fpsSetter = null;
+        }
       });
       if ((statusText.textContent || "").toLowerCase().includes("ready")) {
         playBtn.disabled = false;
       }
+
+      touchBtn.addEventListener("click", () => {
+        const current = touchStates.includes(touchBtn.dataset.state) ? touchBtn.dataset.state : "auto";
+        applyTouchState(touchStates[(touchStates.indexOf(current) + 1) % touchStates.length]);
+      });
+
+      fpsInput.addEventListener("change", applyFpsLimit);
+      fpsInput.addEventListener("blur", applyFpsLimit);
+
+      try {
+        applyTouchState(localStorage.getItem("gta3.touchControls") || "auto");
+        const savedFps = localStorage.getItem("gta3.fpsLimit");
+        if (savedFps !== null) fpsInput.value = savedFps;
+      } catch {
+        applyTouchState("auto");
+      }
+      applyFpsLimit();
+
+      gameFullscreenBtn.addEventListener("click", async () => {
+        try {
+          if (!document.fullscreenElement) {
+            await gameWindow.requestFullscreen?.();
+          } else {
+            await document.exitFullscreen?.();
+          }
+        } catch {}
+      });
 
       playBtn.addEventListener("click", async () => {
         if (launchStarted) {
