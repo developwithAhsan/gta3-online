@@ -1,0 +1,78 @@
+name: Submit SEO URLs to IndexNow
+
+on:
+  workflow_run:
+    workflows: ["Build GTA III WebAssembly site"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Wait for GitHub Pages key and submit sitemap URLs
+        env:
+          INDEXNOW_KEY: "6b38d5f4a8c241c9b174e2d38aa91f07"
+          SITE_BASE: "https://developwithahsan.github.io/gta3-online/"
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          key = os.environ["INDEXNOW_KEY"]
+          base = os.environ["SITE_BASE"]
+          key_url = base + key + ".txt"
+
+          # GitHub Pages deployment can finish shortly after gh-pages is pushed.
+          # Verify the key is publicly reachable before notifying IndexNow.
+          for attempt in range(12):
+              try:
+                  with urllib.request.urlopen(key_url, timeout=15) as r:
+                      body = r.read().decode("utf-8", "replace").strip()
+                  if body == key:
+                      break
+              except Exception:
+                  pass
+              time.sleep(10)
+          else:
+              raise SystemExit("IndexNow key was not publicly reachable after deployment.")
+
+          root = ET.parse("web/sitemap.xml").getroot()
+          ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          urls = [node.text.strip() for node in root.findall("sm:url/sm:loc", ns) if node.text]
+
+          payload = json.dumps({
+              "host": "developwithahsan.github.io",
+              "key": key,
+              "keyLocation": key_url,
+              "urlList": urls,
+          }).encode("utf-8")
+
+          req = urllib.request.Request(
+              "https://api.indexnow.org/indexnow",
+              data=payload,
+              headers={"Content-Type": "application/json; charset=utf-8"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  print("IndexNow status:", response.status)
+                  print("Submitted URLs:", len(urls))
+          except urllib.error.HTTPError as exc:
+              # 200/202 are common success responses; any other code is surfaced.
+              print("IndexNow HTTP error:", exc.code, exc.read().decode("utf-8", "replace"))
+              raise
+          PY
