@@ -55,7 +55,8 @@ jobs:
       - name: Prepare GitHub Pages files
         run: |
           touch web/.nojekyll
-          printf '%s\n' 'User-agent: *' 'Allow: /' > web/robots.txt
+          test -f web/robots.txt
+          test -f web/sitemap.xml
 
       - name: Publish site to gh-pages branch
         env:
