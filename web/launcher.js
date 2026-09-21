@@ -49,6 +49,7 @@
 		assetsMissingList: document.getElementById("assets-missing-list"),
 		pickFolderBtn: document.getElementById("pick-folder-btn"),
 		pickZipBtn: document.getElementById("pick-zip-btn"),
+		downloadPlayBtn: document.getElementById("download-play-btn"),
 		clearCacheBtn: document.getElementById("clear-cache-btn"),
 		zipInput: document.getElementById("zip-input"),
 		devMountBtn: document.getElementById("dev-mount-btn"),
@@ -585,6 +586,59 @@
 
 		await revalidateAssets(instance, mountPoint, manifest);
 
+
+		els.downloadPlayBtn.addEventListener("click", async () => {
+			if (engineStartRequested) return;
+
+			const cfg = window.GTA3_ASSET_CONFIG || {};
+			els.downloadPlayBtn.disabled = true;
+			els.pickFolderBtn.disabled = true;
+			els.pickZipBtn.disabled = true;
+			els.clearCacheBtn.disabled = true;
+			els.startEngineBtn.disabled = true;
+			const originalLabel = els.downloadPlayBtn.textContent;
+			els.downloadPlayBtn.textContent = "Preparing…";
+
+			try {
+				if (!window.OPFSAssetCache?.supported()) {
+					throw new Error("This browser does not support OPFS. Use the local ZIP or folder option instead.");
+				}
+
+				await OPFSAssetCache.requestPersistence();
+				const cacheStatus = await OPFSAssetCache.getStatus();
+
+				if (cacheStatus.ready) {
+					log(`[assets] Download & Play: using existing OPFS cache (${formatBytes(cacheStatus.size)})`, "info");
+					els.downloadPlayBtn.textContent = "Loading cached game…";
+					const cachedZip = await OPFSAssetCache.getArchiveFile();
+					await extractCachedZipToRuntime(instance, mountPoint, manifest, cachedZip, "cached GTA III ZIP");
+					return;
+				}
+
+				if (!cfg.archiveUrl) {
+					throw new Error(
+						"No authorized archive URL is configured in web/asset-source.js. " +
+						"Set GTA3_ASSET_CONFIG.archiveUrl to a ZIP URL you are authorized to distribute."
+					);
+				}
+
+				els.downloadPlayBtn.textContent = "Downloading…";
+				await installRemoteArchiveToOPFS(cfg.archiveUrl);
+
+				const downloaded = await OPFSAssetCache.getArchiveFile();
+				els.downloadPlayBtn.textContent = "Starting…";
+				await extractCachedZipToRuntime(instance, mountPoint, manifest, downloaded, "downloaded GTA III ZIP");
+			} catch (err) {
+				log(`[assets] Download & Play failed: ${err}`, "stderr");
+				showFatalError("Download & Play failed", err);
+			} finally {
+				els.downloadPlayBtn.disabled = false;
+				els.pickFolderBtn.disabled = false;
+				els.pickZipBtn.disabled = false;
+				els.clearCacheBtn.disabled = false;
+				els.downloadPlayBtn.textContent = originalLabel;
+			}
+		});
 
 		els.pickZipBtn.addEventListener("click", () => els.zipInput.click());
 		els.zipInput.addEventListener("change", async () => {

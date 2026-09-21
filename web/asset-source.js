@@ -6,6 +6,6 @@
 // later visits without another network download.
 window.GTA3_ASSET_CONFIG = Object.freeze({
   archiveUrl: "",
-  autoInstall: true,
+  autoInstall: false,
   cacheVersion: "gta3-zip-v1",
 });
