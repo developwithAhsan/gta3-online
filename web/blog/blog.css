@@ -15,7 +15,7 @@
 .article-note{margin:28px 0;padding:14px 16px;border:1px solid var(--border);background:#111b29;color:var(--text2);font-size:.82rem}
 .article-note strong{color:#fff}
 .blog-card-thumb{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-bottom:1px solid var(--border);background:#101a27}
-.blog-card{padding:0;overflow:hidden}
+.blog-card{padding:0;overflow:hidden;gap:0}
 .blog-card-body{display:flex;flex-direction:column;gap:7px;padding:16px 18px 18px}
 .blog-author{color:var(--text3)}
 @media(max-width:600px){.blog-body table{display:block;overflow-x:auto;white-space:nowrap}}
