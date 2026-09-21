@@ -411,6 +411,7 @@
         stopTimer();
         gameWindow.classList.add("hidden");
         document.body.classList.remove("game-window-open");
+        playBtn.disabled = false;
         if (document.fullscreenElement) {
           document.exitFullscreen().catch(() => {});
         }
@@ -419,6 +420,9 @@
       window.addEventListener("gta3-launcher-ready", () => {
         playBtn.disabled = false;
       });
+      if ((statusText.textContent || "").toLowerCase().includes("ready")) {
+        playBtn.disabled = false;
+      }
 
       playBtn.addEventListener("click", async () => {
         if (launchStarted) {
@@ -449,6 +453,8 @@
         } else if (errorBanner.classList.contains("visible")) {
           phase.textContent = "ERROR";
           stopTimer();
+          launchStarted = false;
+          playBtn.disabled = false;
         } else if (launchStarted) {
           phase.textContent = "LOADING";
         }
