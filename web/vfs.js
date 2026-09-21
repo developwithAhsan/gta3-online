@@ -174,6 +174,173 @@
 	}
 
 	/**
+	 * Import a ZIP selected by the user and stream its contents directly into
+	 * Emscripten MEMFS. The compressed archive is read in chunks and is not
+	 * uploaded or persisted by the site. Large extracted assets still consume
+	 * browser RAM because MEMFS is the engine's runtime filesystem.
+	 *
+	 * Requires the fflate UMD bundle to be loaded before vfs.js.
+	 */
+	async function mountFromZipFile(FS, mountPoint, zipFile, { onProgress } = {}) {
+		if (!zipFile) throw new Error("No ZIP file selected.");
+		if (!window.fflate?.Unzip || !window.fflate?.UnzipInflate) {
+			throw new Error("ZIP support did not load. Check the fflate script/network connection and reload the page.");
+		}
+
+		ensureMountPoint(FS, mountPoint);
+
+		const gtaTopLevelDirs = new Set([
+			"anim", "audio", "data", "models", "movies", "mp3", "mss", "text"
+		]);
+
+		function safeRelativePath(rawName) {
+			const parts = normalize(rawName).split("/").filter((part) => part && part !== ".");
+			if (!parts.length || parts.some((part) => part === "..")) return null;
+
+			// Accept archives laid out either directly as data/, models/, TEXT/...
+			// or inside one wrapper directory such as GTA3/data/...
+			if (parts.length > 1 && !gtaTopLevelDirs.has(parts[0].toLowerCase())) {
+				parts.shift();
+			}
+			return parts.join("/");
+		}
+
+		let filesDone = 0;
+		let extractedBytes = 0;
+		let skippedFiles = 0;
+		let compressedRead = 0;
+		let inputFinished = false;
+		let settled = false;
+		const activeEntries = new Set();
+
+		let resolveComplete;
+		let rejectComplete;
+		const complete = new Promise((resolve, reject) => {
+			resolveComplete = resolve;
+			rejectComplete = reject;
+		});
+
+		function fail(err) {
+			if (settled) return;
+			settled = true;
+			rejectComplete(err instanceof Error ? err : new Error(String(err)));
+		}
+
+		function maybeFinish() {
+			if (!settled && inputFinished && activeEntries.size === 0) {
+				settled = true;
+				resolveComplete(filesDone);
+			}
+		}
+
+		const unzipper = new window.fflate.Unzip((entry) => {
+			activeEntries.add(entry);
+
+			const rel = safeRelativePath(entry.name);
+			const isDirectory = entry.name.endsWith("/");
+			const skip = !rel || isDirectory || shouldSkipImportedFile(rel);
+			let stream = null;
+			let entryBytes = 0;
+
+			if (!skip) {
+				const absPath = joinPath(mountPoint, rel);
+				const dir = absPath.slice(0, absPath.lastIndexOf("/"));
+				if (dir) FS.mkdirTree(dir);
+				stream = FS.open(absPath, "w");
+			} else if (!isDirectory) {
+				skippedFiles++;
+			}
+
+			entry.ondata = (err, chunk, final) => {
+				if (err) {
+					if (stream) {
+						try { FS.close(stream); } catch {}
+					}
+					activeEntries.delete(entry);
+					fail(err);
+					return;
+				}
+
+				try {
+					if (!skip && chunk?.length) {
+						FS.write(stream, chunk, 0, chunk.length);
+						entryBytes += chunk.length;
+						extractedBytes += chunk.length;
+					}
+
+					onProgress?.({
+						phase: skip ? "skipping" : "extracting",
+						currentFile: rel || entry.name,
+						filesDone,
+						extractedBytes,
+						compressedRead,
+						compressedTotal: zipFile.size || 0,
+						entryBytes,
+						skippedFiles,
+					});
+
+					if (final) {
+						if (stream) FS.close(stream);
+						if (!skip) filesDone++;
+						activeEntries.delete(entry);
+						maybeFinish();
+					}
+				} catch (writeErr) {
+					if (stream) {
+						try { FS.close(stream); } catch {}
+					}
+					activeEntries.delete(entry);
+					fail(writeErr);
+				}
+			};
+
+			try {
+				entry.start();
+			} catch (err) {
+				activeEntries.delete(entry);
+				fail(err);
+			}
+		});
+
+		unzipper.register(window.fflate.UnzipInflate);
+
+		try {
+			const reader = zipFile.stream().getReader();
+			while (true) {
+				const { value, done } = await reader.read();
+				if (done) break;
+				if (settled) break;
+
+				const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+				compressedRead += chunk.byteLength;
+				unzipper.push(chunk, false);
+
+				onProgress?.({
+					phase: "reading-archive",
+					currentFile: "",
+					filesDone,
+					extractedBytes,
+					compressedRead,
+					compressedTotal: zipFile.size || 0,
+					entryBytes: 0,
+					skippedFiles,
+				});
+
+				// Yield occasionally so progress/UI paint is not starved.
+				await new Promise((resolve) => setTimeout(resolve, 0));
+			}
+
+			if (!settled) unzipper.push(new Uint8Array(0), true);
+			inputFinished = true;
+			maybeFinish();
+		} catch (err) {
+			fail(err);
+		}
+
+		return complete;
+	}
+
+	/**
 	 * Task 8: development-only asset mounting. Fetches a file listing + raw bytes
 	 * from the *local dev server* (scripts/serve_web.py --dev-assets <dir>), never
 	 * from anywhere else. This code path only runs when explicitly requested (see
@@ -448,6 +615,7 @@
 		loadFromIDB,
 		persistToIDB,
 		mountFromFileList,
+		mountFromZipFile,
 		mountFromDevServer,
 		mountFromPackage,
 		chdirToRoot,

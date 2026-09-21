@@ -48,6 +48,8 @@
 		assetsStatus: document.getElementById("assets-status"),
 		assetsMissingList: document.getElementById("assets-missing-list"),
 		pickFolderBtn: document.getElementById("pick-folder-btn"),
+		pickZipBtn: document.getElementById("pick-zip-btn"),
+		zipInput: document.getElementById("zip-input"),
 		devMountBtn: document.getElementById("dev-mount-btn"),
 		startEngineBtn: document.getElementById("start-engine-btn"),
 		folderInput: document.getElementById("folder-input"),
@@ -515,6 +517,77 @@
 		}
 
 		await revalidateAssets(instance, mountPoint, manifest);
+
+
+		els.pickZipBtn.addEventListener("click", () => els.zipInput.click());
+		els.zipInput.addEventListener("change", async () => {
+			const zipFile = els.zipInput.files?.[0];
+			if (!zipFile) return;
+
+			els.pickFolderBtn.disabled = true;
+			els.pickZipBtn.disabled = true;
+			els.startEngineBtn.disabled = true;
+			const originalLabel = els.pickZipBtn.textContent;
+
+			showLoadingOverlay();
+			setLoadingTitle("Extracting GTA III ZIP");
+			setLoadingStage("ZIP → RAM");
+			setLoadingStatus("Reading and extracting your local ZIP in the browser…");
+			setLoadingDetail("The archive stays on this device. Extracted game files are mounted in session RAM.");
+			setProgress(0);
+
+			try {
+				const n = await AssetVFS.mountFromZipFile(instance.FS, mountPoint, zipFile, {
+					onProgress: (p) => {
+						const fraction = p.compressedTotal > 0 ? p.compressedRead / p.compressedTotal : null;
+						setProgress(fraction);
+						if (p.phase === "reading-archive") {
+							setLoadingStatus("Reading GTA III archive…");
+							setLoadingDetail(`${formatBytes(p.compressedRead)} / ${formatBytes(p.compressedTotal)} read • ${p.filesDone} file(s) extracted`);
+						} else if (p.phase === "extracting") {
+							setLoadingStatus(`Extracting game files — ${p.filesDone} complete`);
+							setLoadingDetail(`${p.currentFile} • ${formatBytes(p.extractedBytes)} extracted to RAM`);
+						}
+						els.pickZipBtn.textContent = `Extracting… ${Math.round((fraction || 0) * 100)}%`;
+					},
+				});
+				log(`[assets] extracted ${n} relevant file(s) from local ZIP into MEMFS`, "info");
+
+				setLoadingTitle("Checking GTA III files");
+				setLoadingStage("VALIDATION");
+				setLoadingStatus("Validating extracted game data…");
+				setLoadingDetail("Checking required assets and level-manifest references.");
+				setProgress(0.99);
+				await new Promise((resolve) => setTimeout(resolve, 0));
+
+				const result = await revalidateAssets(instance, mountPoint, manifest);
+				if (!result?.ok) {
+					throw new Error("The ZIP was extracted, but required GTA III files are missing or incompatible. See the asset list for details.");
+				}
+
+				setProgress(1);
+				setLoadingStatus("Game files ready");
+				setLoadingDetail("Starting the WebAssembly engine…");
+				log("[assets] ZIP validation passed; starting engine automatically", "info");
+
+				// The normal Play handler is attached after setupAssetPanel() returns.
+				// This user event happens later, so clicking it here enters the same
+				// tested startup path instead of duplicating engine boot logic.
+				setTimeout(() => els.startEngineBtn.click(), 0);
+			} catch (err) {
+				log(`[assets] ZIP import failed: ${err}`, "stderr");
+				showFatalError("Could not load GTA III ZIP", err);
+			} finally {
+				els.pickFolderBtn.disabled = false;
+				els.pickZipBtn.disabled = false;
+				els.pickZipBtn.textContent = originalLabel;
+				els.zipInput.value = "";
+				if (!els.errorBanner.classList.contains("visible")) {
+					// Keep the loading overlay visible when auto-starting; runEngineMain
+					// will update it through the engine startup stages.
+				}
+			}
+		});
 
 		els.pickFolderBtn.addEventListener("click", () => els.folderInput.click());
 		els.folderInput.addEventListener("change", async () => {
