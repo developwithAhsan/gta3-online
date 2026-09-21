@@ -1,0 +1,163 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\graphicspath{{"C:/Users/Divyam/Pictures/JAVA LAB/"}}
+
+% -----------------------------------------------------
+% bvraghav-tiet-ucs503p-article.sty
+% -----------------------------------------------------
+
+% Variable: Lab Instructor
+\makeatletter \newcommand{\BvrSetLabInstructor}[1]{%
+  \gdef\Bvr@LabInstructor{#1}}
+% default
+\newcommand{\Bvr@LabInstructor}{Dr. Raghav %
+  B. Venkataramaiyer}
+% public accessor
+\newcommand{\BvrLabInstructorValue}{\Bvr@LabInstructor}
+\makeatother
+
+% Add subtitle
+\usepackage{titling}
+% -- Set title bold
+\pretitle{\begin{center}\bfseries\fontsize{18bp}{18bp}\selectfont}
+\makeatletter
+\newcommand{\BvrSubtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip 0.5em}%
+}
+\makeatother
+
+% Hints in the section title(s)
+\newcommand{\BvrHint}[1]{%
+  {\normalfont\normalsize\itshape\hfill #1}}
+
+% -----------------------------------------------------
+
+\title{GTA3-WASM: TODO (working title)}
+
+\BvrSetLabInstructor{Dr. Raghav B. Venkataramaiyer}
+
+\BvrSubtitle{%
+  Project Proposal for UCS503P  \\
+  Submitted to: \BvrLabInstructorValue \\ \bfseries
+  Thapar Institute of Engineering and Technology%
+}
+
+\author{
+  Antriksh, CSED%
+  \thanks{Roll No: \texttt{1024031034}, %
+    Email: \texttt{TODO\_be24\@thapar.edu}}
+  \and
+  Divam, CSED%
+  \thanks{Roll No: \texttt{1024031032}, %
+    Email: \texttt{TODO\_be24\@thapar.edu}}
+}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Higher-order goal%
+  \BvrHint{\ldots secondary framing}}
+TODO
+
+\section{Time-to-value %
+\BvrHint{\ldots primary heuristic}}
+TODO
+
+\section{Problem Statement}
+TODO
+
+\section{Proposed Solution %
+\BvrHint{\ldots Software Proposition}}
+TODO
+
+\section{Solution Approach %
+
+% 1. Use Case Diagram
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{use_case_diagram.png}
+    \caption{GTA 3 WASM System Use Case Diagram}
+    \label{fig:use_case}
+\end{figure}
+
+% 2. DFD Level 0 (Context Diagram)
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{dfd_level_0.png}
+    \caption{Level 0 Data Flow Diagram (Context Diagram)}
+    \label{fig:dfd_level_0}
+\end{figure}
+
+% 3. DFD Level 1 (Subsystems)
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{dfd_level_1.png}
+    \caption{Level 1 Data Flow Diagram (Subsystem Decomposition)}
+    \label{fig:dfd_level_1}
+\end{figure}
+
+% 4. Activity Diagram
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{activity_diagram.png}
+    \caption{Initialization and Frame Loop Activity Diagram}
+    \label{fig:activity}
+\end{figure}
+
+% 5. Sequence Diagram
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.90\textwidth]{sequence_diagram.png}
+    \caption{Main Frame Execution Loop Sequence Diagram}
+    \label{fig:sequence}
+\end{figure}
+
+% 6. Collaboration Diagram
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{collaboration_diagram.png}
+    \caption{Save Game Pipeline Collaboration Diagram}
+    \label{fig:collaboration}
+\end{figure}
+\BvrHint{\ldots Engineering focus}}
+TODO
+
+\section{Evaluation Criterion %
+\BvrHint{\ldots measurable and attributable}}
+TODO
+
+\section{Scalability %
+\BvrHint{\ldots with foresight}}
+TODO
+
+\section{Engine availability heuristic}
+TODO
+
+\section{Project scope and deliverables %
+
+% 7. Gantt Chart
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{gantt_chart.png}
+    \caption{GTA 3 WASM Port Project Schedule and Milestones (Gantt Chart)}
+    \label{fig:gantt_chart}
+\end{figure}
+\BvrHint{\ldots iteration-friendly}}
+TODO
+
+\section{Risks and mitigations}
+TODO
+
+\section{Summary}
+TODO
+
+\end{document}

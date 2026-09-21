@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101317">
+  <meta name="description" content="Play your legally owned copy of GTA III in a modern browser using the re3 WebAssembly port.">
+  <title>GTA III — Play in Browser</title>
+  <link rel="stylesheet" href="styles.css?v=10">
+</head>
+<body>
+  <noscript>This page requires JavaScript and WebAssembly.</noscript>
+
+  <div id="app">
+    <header id="topbar">
+      <a class="brand" href="./" aria-label="GTA III Browser home">
+        <span class="brand-mark">III</span>
+        <span class="brand-copy">
+          <strong>GTA III</strong>
+          <small>Browser Edition</small>
+        </span>
+      </a>
+
+      <div class="runtime-status">
+        <span class="status-dot" id="status-dot" data-state="loading"></span>
+        <span id="status-text">Starting…</span>
+        <span id="fps-badge" class="fps-badge" title="Live FPS">FPS: -</span>
+      </div>
+
+      <div class="top-actions">
+        <label id="debug-mode-toggle" class="debug-toggle" title="Use timer-based rendering if requestAnimationFrame is unavailable.">
+          <input type="checkbox" id="debug-mode-checkbox"> Debug
+        </label>
+        <button id="fullscreen-btn" type="button">Fullscreen</button>
+        <button id="input-debug-btn" type="button">Input</button>
+        <button id="diagnostics-btn" type="button">Diagnostics</button>
+      </div>
+    </header>
+
+    <main class="game-shell">
+      <section id="viewport" aria-label="GTA III game viewport">
+        <div id="error-banner">
+          <div class="error-title">Runtime error</div>
+          <div class="error-detail" id="error-detail"></div>
+        </div>
+
+        <canvas id="canvas" tabindex="-1"></canvas>
+
+        <div id="loading-overlay">
+          <div class="loading-card">
+            <div class="loading-brand">
+              <span class="loading-mark">III</span>
+              <span>LIBERTY CITY</span>
+            </div>
+            <div class="spinner"></div>
+            <h2 id="loading-title">Preparing GTA III</h2>
+            <div id="loading-status">Loading WebAssembly module…</div>
+            <div id="loading-detail">Initializing the browser runtime.</div>
+            <div class="progress-track" aria-label="Loading progress">
+              <div class="progress-fill indeterminate" id="progress-fill"></div>
+            </div>
+            <div class="loading-meta">
+              <span id="loading-percent">Loading…</span>
+              <span id="loading-stage">WASM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-layer" aria-hidden="true">
+          <div class="hero-grid"></div>
+          <div class="hero-vignette"></div>
+          <div class="hero-copy">
+            <div class="eyebrow">LIBERTY CITY • WEBASSEMBLY</div>
+            <h1>Grand Theft Auto <span>III</span></h1>
+            <p>Run the open-source re3 engine directly in your browser. Your GTA III files stay on your device.</p>
+          </div>
+        </div>
+
+        <button id="pointerlock-hint" class="hidden" type="button">Click to enable mouse look — Esc to release</button>
+
+        <div id="assets-overlay" class="hidden">
+          <div class="assets-card">
+            <div class="card-kicker">ONE-TIME SETUP</div>
+            <h2>Use your GTA III game files</h2>
+            <p class="assets-hint">
+              Choose the installation folder from a legally obtained PC copy of GTA III.
+              Files are read locally into this browser session and are never uploaded to this website.
+            </p>
+
+            <div class="setup-steps">
+              <div><span>1</span><p><strong>Select folder</strong><small>Choose your GTA III installation directory.</small></p></div>
+              <div><span>2</span><p><strong>Validate files</strong><small>The launcher checks required game assets.</small></p></div>
+              <div><span>3</span><p><strong>Play</strong><small>The launcher starts GTA III and enters a new game automatically.</small></p></div>
+            </div>
+
+            <div id="assets-status" class="asset-status">Checking browser storage…</div>
+            <ul id="assets-missing-list"></ul>
+
+            <div class="assets-actions">
+              <button id="pick-folder-btn" class="primary-btn" type="button">Select GTA III folder</button>
+              <button id="dev-mount-btn" type="button" style="display:none">Load from dev server</button>
+              <button id="start-engine-btn" class="play-btn" type="button" disabled>Play GTA III</button>
+            </div>
+
+            <div class="legal-note">
+              This project does not include or distribute Rockstar/Take-Two game assets.
+              You must supply your own copy.
+            </div>
+
+            <input type="file" id="folder-input" webkitdirectory multiple hidden>
+          </div>
+        </div>
+      </section>
+
+      <aside id="sidepanel">
+        <div class="panel-header">
+          <strong>Runtime tools</strong>
+          <span>re3 / WASM</span>
+        </div>
+
+        <div class="panel-section" id="boot-progress-section">
+          <h2>Boot progress</h2>
+          <ol id="boot-progress-list">
+            <li data-stage="1">WASM loaded</li>
+            <li data-stage="2">Filesystem initialized</li>
+            <li data-stage="3">Renderer initialized</li>
+            <li data-stage="4">Audio initialized</li>
+            <li data-stage="5">Game data loaded</li>
+            <li data-stage="6">Engine initialized</li>
+            <li data-stage="7">Main menu</li>
+          </ol>
+        </div>
+
+        <div class="panel-section" id="input-debug-section">
+          <h2>Input debug</h2>
+          <table id="input-summary-table"></table>
+          <div class="input-subhead">Keyboard</div>
+          <div id="input-keys-list" class="input-chip-list">(none)</div>
+          <div class="input-subhead">Mouse</div>
+          <table id="input-mouse-table"></table>
+          <div class="input-subhead">Gamepad</div>
+          <div id="input-gamepad-info">No gamepad connected.</div>
+        </div>
+
+        <div class="panel-section" id="diagnostics-section">
+          <h2>Diagnostics</h2>
+          <table id="diagnostics-table"></table>
+        </div>
+
+        <div class="panel-section" id="perf-section">
+          <h2>Frame timing</h2>
+          <table id="perf-table"></table>
+        </div>
+
+        <div class="panel-section" id="save-section">
+          <h2>Save system</h2>
+          <table id="save-table"></table>
+          <div class="assets-actions compact">
+            <button id="save-force-sync-btn" type="button">Force Save Sync</button>
+            <button id="save-clear-btn" type="button">Clear Browser Saves…</button>
+          </div>
+        </div>
+
+        <div class="panel-section" id="log-section">
+          <h2>Log</h2>
+          <pre id="log-output"></pre>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <span>Open-source browser runtime based on re3.</span>
+      <span>GTA III and related marks belong to their respective owners.</span>
+    </footer>
+  </div>
+
+  <script src="build/re3_wasm.js"></script>
+  <script src="vfs.js?v=15"></script>
+  <script src="saves.js?v=11"></script>
+  <script src="input.js?v=10"></script>
+  <script src="perf.js?v=10"></script>
+  <script src="boot.js?v=10"></script>
+  <script src="launcher.js?v=16"></script>
+</body>
+</html>
