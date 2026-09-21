@@ -49,6 +49,7 @@
 		assetsMissingList: document.getElementById("assets-missing-list"),
 		pickFolderBtn: document.getElementById("pick-folder-btn"),
 		pickZipBtn: document.getElementById("pick-zip-btn"),
+		clearCacheBtn: document.getElementById("clear-cache-btn"),
 		zipInput: document.getElementById("zip-input"),
 		devMountBtn: document.getElementById("dev-mount-btn"),
 		startEngineBtn: document.getElementById("start-engine-btn"),
@@ -491,6 +492,72 @@
 		return result;
 	}
 
+
+	async function extractCachedZipToRuntime(instance, mountPoint, manifest, zipFile, label = "cached ZIP") {
+		showLoadingOverlay();
+		setLoadingTitle("Preparing GTA III");
+		setLoadingStage("OPFS → RAM");
+		setLoadingStatus(`Extracting ${label} into the WebAssembly runtime…`);
+		setLoadingDetail("No network download is needed for this step.");
+		setProgress(0);
+
+		const n = await AssetVFS.mountFromZipFile(instance.FS, mountPoint, zipFile, {
+			onProgress: (p) => {
+				const fraction = p.compressedTotal > 0 ? p.compressedRead / p.compressedTotal : null;
+				setProgress(fraction);
+				if (p.phase === "reading-archive") {
+					setLoadingStatus(`Reading ${label}…`);
+					setLoadingDetail(`${formatBytes(p.compressedRead)} / ${formatBytes(p.compressedTotal)} • ${p.filesDone} file(s) extracted`);
+				} else if (p.phase === "extracting") {
+					setLoadingStatus(`Extracting game files — ${p.filesDone} complete`);
+					setLoadingDetail(`${p.currentFile} • ${formatBytes(p.extractedBytes)} extracted to runtime RAM`);
+				}
+			},
+		});
+
+		log(`[assets] extracted ${n} relevant file(s) from ${label} into MEMFS`, "info");
+		setLoadingTitle("Checking GTA III files");
+		setLoadingStage("VALIDATION");
+		setLoadingStatus("Validating GTA III game data…");
+		setLoadingDetail("Checking required models, scripts and level-manifest references.");
+		setProgress(0.99);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		const result = await revalidateAssets(instance, mountPoint, manifest);
+		if (!result?.ok) {
+			throw new Error("Cached ZIP extracted successfully, but required GTA III files are missing or incompatible.");
+		}
+
+		setProgress(1);
+		setLoadingStatus("Game files ready");
+		setLoadingDetail("Starting GTA III automatically…");
+		log("[assets] cached ZIP validated; scheduling automatic engine start", "info");
+		setTimeout(() => els.startEngineBtn.click(), 0);
+		return result;
+	}
+
+	async function installRemoteArchiveToOPFS(url) {
+		showLoadingOverlay();
+		setLoadingTitle("Downloading GTA III archive");
+		setLoadingStage("NETWORK → OPFS");
+		setLoadingStatus("Saving the compressed ZIP in private browser storage…");
+		setLoadingDetail("This is a one-time network download. Future visits reuse the OPFS cache.");
+		setProgress(0);
+
+		await OPFSAssetCache.cacheRemoteUrl(url, {
+			onProgress: (p) => {
+				const fraction = p.total > 0 ? p.loaded / p.total : null;
+				setProgress(fraction);
+				setLoadingStatus("Downloading GTA III archive…");
+				setLoadingDetail(
+					p.total > 0
+						? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} saved to OPFS`
+						: `${formatBytes(p.loaded)} saved to OPFS`
+				);
+			},
+		});
+	}
+
 	async function setupAssetPanel(instance, mountPoint) {
 		setDiag("Asset root", mountPoint);
 
@@ -526,66 +593,64 @@
 
 			els.pickFolderBtn.disabled = true;
 			els.pickZipBtn.disabled = true;
+			els.clearCacheBtn.disabled = true;
 			els.startEngineBtn.disabled = true;
 			const originalLabel = els.pickZipBtn.textContent;
 
-			showLoadingOverlay();
-			setLoadingTitle("Extracting GTA III ZIP");
-			setLoadingStage("ZIP → RAM");
-			setLoadingStatus("Reading and extracting your local ZIP in the browser…");
-			setLoadingDetail("The archive stays on this device. Extracted game files are mounted in session RAM.");
-			setProgress(0);
-
 			try {
-				const n = await AssetVFS.mountFromZipFile(instance.FS, mountPoint, zipFile, {
-					onProgress: (p) => {
-						const fraction = p.compressedTotal > 0 ? p.compressedRead / p.compressedTotal : null;
-						setProgress(fraction);
-						if (p.phase === "reading-archive") {
-							setLoadingStatus("Reading GTA III archive…");
-							setLoadingDetail(`${formatBytes(p.compressedRead)} / ${formatBytes(p.compressedTotal)} read • ${p.filesDone} file(s) extracted`);
-						} else if (p.phase === "extracting") {
-							setLoadingStatus(`Extracting game files — ${p.filesDone} complete`);
-							setLoadingDetail(`${p.currentFile} • ${formatBytes(p.extractedBytes)} extracted to RAM`);
-						}
-						els.pickZipBtn.textContent = `Extracting… ${Math.round((fraction || 0) * 100)}%`;
-					},
-				});
-				log(`[assets] extracted ${n} relevant file(s) from local ZIP into MEMFS`, "info");
+				if (window.OPFSAssetCache?.supported()) {
+					await OPFSAssetCache.requestPersistence();
+					showLoadingOverlay();
+					setLoadingTitle("Caching GTA III ZIP");
+					setLoadingStage("ZIP → OPFS");
+					setLoadingStatus("Saving your ZIP in private browser storage…");
+					setLoadingDetail("This cached ZIP will be reused on later visits.");
+					setProgress(0);
 
-				setLoadingTitle("Checking GTA III files");
-				setLoadingStage("VALIDATION");
-				setLoadingStatus("Validating extracted game data…");
-				setLoadingDetail("Checking required assets and level-manifest references.");
-				setProgress(0.99);
-				await new Promise((resolve) => setTimeout(resolve, 0));
+					await OPFSAssetCache.cacheLocalFile(zipFile, {
+						onProgress: (p) => {
+							const fraction = p.total > 0 ? p.loaded / p.total : null;
+							setProgress(fraction);
+							setLoadingStatus("Caching GTA III ZIP…");
+							setLoadingDetail(
+								p.total > 0
+									? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} saved to OPFS`
+									: `${formatBytes(p.loaded)} saved to OPFS`
+							);
+							els.pickZipBtn.textContent = `Caching… ${Math.round((fraction || 0) * 100)}%`;
+						},
+					});
 
-				const result = await revalidateAssets(instance, mountPoint, manifest);
-				if (!result?.ok) {
-					throw new Error("The ZIP was extracted, but required GTA III files are missing or incompatible. See the asset list for details.");
+					const cached = await OPFSAssetCache.getArchiveFile();
+					await extractCachedZipToRuntime(instance, mountPoint, manifest, cached, "cached GTA III ZIP");
+				} else {
+					log("[assets] OPFS unavailable; falling back to session-only ZIP extraction", "stderr");
+					await extractCachedZipToRuntime(instance, mountPoint, manifest, zipFile, "selected GTA III ZIP");
 				}
-
-				setProgress(1);
-				setLoadingStatus("Game files ready");
-				setLoadingDetail("Starting the WebAssembly engine…");
-				log("[assets] ZIP validation passed; starting engine automatically", "info");
-
-				// The normal Play handler is attached after setupAssetPanel() returns.
-				// This user event happens later, so clicking it here enters the same
-				// tested startup path instead of duplicating engine boot logic.
-				setTimeout(() => els.startEngineBtn.click(), 0);
 			} catch (err) {
-				log(`[assets] ZIP import failed: ${err}`, "stderr");
-				showFatalError("Could not load GTA III ZIP", err);
+				log(`[assets] ZIP cache/import failed: ${err}`, "stderr");
+				showFatalError("Could not cache or load GTA III ZIP", err);
 			} finally {
 				els.pickFolderBtn.disabled = false;
 				els.pickZipBtn.disabled = false;
+				els.clearCacheBtn.disabled = false;
 				els.pickZipBtn.textContent = originalLabel;
 				els.zipInput.value = "";
-				if (!els.errorBanner.classList.contains("visible")) {
-					// Keep the loading overlay visible when auto-starting; runEngineMain
-					// will update it through the engine startup stages.
-				}
+			}
+		});
+
+		els.clearCacheBtn.addEventListener("click", async () => {
+			if (!window.OPFSAssetCache?.supported()) return;
+			els.clearCacheBtn.disabled = true;
+			try {
+				await OPFSAssetCache.clear();
+				els.assetsStatus.textContent = "Cached GTA III ZIP cleared. Select a ZIP to cache it again.";
+				delete els.assetsStatus.dataset.ok;
+				log("[assets] cleared persistent OPFS GTA III ZIP cache", "info");
+			} catch (err) {
+				log(`[assets] failed to clear OPFS cache: ${err}`, "stderr");
+			} finally {
+				els.clearCacheBtn.disabled = false;
 			}
 		});
 
@@ -663,6 +728,37 @@
 				await revalidateAssets(instance, mountPoint, manifest);
 			});
 		}
+
+		// Persistent OPFS archive cache. The compressed ZIP is stored once and
+		// extracted into MEMFS on each visit because this re3 build reads from
+		// Emscripten FS directly.
+		if (window.OPFSAssetCache?.supported()) {
+			try {
+				await OPFSAssetCache.requestPersistence();
+				const cacheStatus = await OPFSAssetCache.getStatus();
+				setDiag("Persistent OPFS ZIP cache", cacheStatus.ready ? formatBytes(cacheStatus.size) : "not installed", cacheStatus.ready ? true : "warn");
+
+				if (cacheStatus.ready) {
+					els.assetsStatus.textContent = `Cached GTA III ZIP found (${formatBytes(cacheStatus.size)}). Loading from browser storage…`;
+					els.assetsStatus.dataset.ok = "true";
+					const cachedZip = await OPFSAssetCache.getArchiveFile();
+					await extractCachedZipToRuntime(instance, mountPoint, manifest, cachedZip, "cached GTA III ZIP");
+				} else {
+					const cfg = window.GTA3_ASSET_CONFIG || {};
+					if (cfg.autoInstall && cfg.archiveUrl) {
+						await installRemoteArchiveToOPFS(cfg.archiveUrl);
+						const cachedZip = await OPFSAssetCache.getArchiveFile();
+						await extractCachedZipToRuntime(instance, mountPoint, manifest, cachedZip, "downloaded GTA III ZIP");
+					}
+				}
+			} catch (err) {
+				log(`[assets] OPFS cache restore/install failed: ${err}`, "stderr");
+				els.assetsStatus.textContent = "Persistent cache could not be loaded. You can still select a local GTA III ZIP or folder.";
+				els.assetsStatus.dataset.ok = "false";
+				hideLoadingOverlay();
+			}
+		}
+
 
 		els.assetsOverlay.classList.remove("hidden");
 	}
@@ -967,7 +1063,7 @@
 			els.assetsOverlay.classList.remove("hidden"); // still let the user hit Start
 		}
 
-		setStatus("ok", "Ready — select your GTA III folder to play.");
+		setStatus("ok", "Ready — persistent GTA III asset cache initialized.");
 		els.startEngineBtn.addEventListener("click", () => {
 			runEngineMain(instance, mountPoint, focusRecovery, tabThrottling)
 				.catch((err) => {

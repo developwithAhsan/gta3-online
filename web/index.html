@@ -84,12 +84,12 @@
             <h2>Use your GTA III game files</h2>
             <p class="assets-hint">
               Choose the installation folder from a legally obtained PC copy of GTA III.
-              Files are read locally into this browser session and are never uploaded to this website.
+              Your ZIP can be cached once in the browser's private OPFS storage. Later visits reuse the cached archive without downloading it again.
             </p>
 
             <div class="setup-steps">
               <div><span>1</span><p><strong>Select folder or ZIP</strong><small>Choose your legally obtained GTA III installation folder or ZIP archive.</small></p></div>
-              <div><span>2</span><p><strong>Validate files</strong><small>The launcher checks required game assets.</small></p></div>
+              <div><span>2</span><p><strong>Cache + validate</strong><small>The ZIP is kept in private browser storage, then extracted into the WASM runtime.</small></p></div>
               <div><span>3</span><p><strong>Play</strong><small>The launcher starts GTA III and enters a new game automatically.</small></p></div>
             </div>
 
@@ -98,7 +98,7 @@
 
             <div class="assets-actions">
               <button id="pick-folder-btn" class="primary-btn" type="button">Select GTA III folder</button>
-              <button id="pick-zip-btn" class="primary-btn" type="button">Select GTA III ZIP</button>
+              <button id="pick-zip-btn" class="primary-btn" type="button">Select & Cache GTA III ZIP</button>\n              <button id="clear-cache-btn" type="button">Clear cached ZIP</button>
               <button id="dev-mount-btn" type="button" style="display:none">Load from dev server</button>
               <button id="start-engine-btn" class="play-btn" type="button" disabled>Play GTA III</button>
             </div>
@@ -176,13 +176,13 @@
     </footer>
   </div>
 
-  <script src="build/re3_wasm.js"></script>
+  <script src="build/re3_wasm.js"></script>\n  <script src="asset-source.js?v=1"></script>\n  <script src="opfs-cache.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
   <script src="vfs.js?v=16"></script>
   <script src="saves.js?v=11"></script>
   <script src="input.js?v=10"></script>
   <script src="perf.js?v=10"></script>
   <script src="boot.js?v=10"></script>
-  <script src="launcher.js?v=17"></script>
+  <script src="launcher.js?v=18"></script>
 </body>
 </html>
