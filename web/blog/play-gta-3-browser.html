@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How GTA III Browser Play Works — GTA III Browser</title>
+<meta name="description" content="How the GTA III browser launcher downloads, caches, extracts, validates and starts game data using OPFS and WebAssembly.">
+<meta name="robots" content="index,follow,max-snippet:-1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How GTA III Browser Play Works">
+<meta property="og:description" content="How the GTA III browser launcher downloads, caches, extracts, validates and starts game data using OPFS and WebAssembly.">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="blog.css">
+<script>var l=document.createElement('link');l.rel='canonical';l.href=new URL('play-gta-3-browser.html',location.origin+'/blog/').href;document.head.appendChild(l);</script>
+</head>
+<body>
+<nav class="blog-nav"><a class="blog-nav-logo" href="../">GTA III</a><span class="blog-nav-sep">›</span><a class="blog-nav-link" href="./">Blog</a><span class="blog-nav-sep">›</span><span class="blog-nav-link">How To</span><a class="blog-nav-play" href="../#play">▶ Play GTA III</a></nav>
+<div class="blog-wrap">
+  <header class="blog-hero"><span class="blog-cat">How To</span><h1 class="blog-h1">How GTA III Browser Play Works</h1><div class="blog-meta"><span>Updated 2026</span><span>5 min read</span></div></header>
+  <div class="blog-body"><p>This site uses a WebAssembly build of the open-source re3 runtime. The browser page itself is only the launcher and runtime shell; it prepares game data, creates the WebAssembly module and then hands control to the engine.</p>
+<h2>Step 1: one-time archive download</h2><p>When you choose Download & Play, the browser requests the configured authorized archive through the asset proxy. The proxy supplies CORS and range-friendly responses so the browser worker can access the file.</p>
+<h2>Step 2: persistent OPFS cache</h2><p>The compressed ZIP is written to Origin Private File System storage. OPFS is private to the site origin and is designed for local browser file storage. If the cache remains available, the next visit can reuse the same ZIP instead of downloading it again.</p>
+<h2>Step 3: extract into the runtime</h2><p>The current re3 build reads files through Emscripten's virtual filesystem. For that reason the cached archive is read and extracted into MEMFS for the current session before the engine starts.</p>
+<h2>Step 4: validation and launch</h2><p>The launcher checks required files and important data references. When validation succeeds, it changes the engine working directory to the mounted game root and calls the WebAssembly main function.</p>
+<div class="info-box"><strong>Important:</strong> “download once” means the network archive can be reused from OPFS. It does not mean the browser can skip preparing the runtime filesystem on every fresh page session.</div></div>
+  <div class="blog-cta"><h3>Ready to enter Liberty City?</h3><p>Open the GTA III browser launcher, use the one-time OPFS setup, and start the re3 WebAssembly runtime.</p><a href="../#play">▶ Play GTA III</a></div>
+  <div class="blog-related"><h2>More GTA III Guides</h2><div class="blog-related-grid">
+    <a class="blog-related-card" href="gta-3-cheat-codes.html"><span>Cheats</span><strong>GTA III Cheat Codes</strong></a>
+    <a class="blog-related-card" href="gta-3-map-guide.html"><span>Map</span><strong>Liberty City Map Guide</strong></a>
+    <a class="blog-related-card" href="gta-3-hidden-packages.html"><span>Collectibles</span><strong>Hidden Packages Guide</strong></a>
+    <a class="blog-related-card" href="play-gta-3-browser.html"><span>How To</span><strong>Playing GTA III in Browser</strong></a>
+  </div></div>
+</div>
+<footer class="blog-footer"><p><a href="../">GTA III Browser</a> · <a href="./">All Articles</a> · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a></p><p>Independent re3 WebAssembly browser project. Not affiliated with Rockstar Games or Take-Two Interactive.</p></footer>
+</body></html>

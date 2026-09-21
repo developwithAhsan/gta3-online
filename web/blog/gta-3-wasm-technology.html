@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How re3 Runs in a Browser with WebAssembly — GTA III Browser</title>
+<meta name="description" content="A technical overview of Emscripten, WebAssembly, MEMFS, OPFS and browser diagnostics in the GTA III launcher.">
+<meta name="robots" content="index,follow,max-snippet:-1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How re3 Runs in a Browser with WebAssembly">
+<meta property="og:description" content="A technical overview of Emscripten, WebAssembly, MEMFS, OPFS and browser diagnostics in the GTA III launcher.">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="blog.css">
+<script>var l=document.createElement('link');l.rel='canonical';l.href=new URL('gta-3-wasm-technology.html',location.origin+'/blog/').href;document.head.appendChild(l);</script>
+</head>
+<body>
+<nav class="blog-nav"><a class="blog-nav-logo" href="../">GTA III</a><span class="blog-nav-sep">›</span><a class="blog-nav-link" href="./">Blog</a><span class="blog-nav-sep">›</span><span class="blog-nav-link">Tech</span><a class="blog-nav-play" href="../#play">▶ Play GTA III</a></nav>
+<div class="blog-wrap">
+  <header class="blog-hero"><span class="blog-cat">Tech</span><h1 class="blog-h1">How re3 Runs in a Browser with WebAssembly</h1><div class="blog-meta"><span>Updated 2026</span><span>7 min read</span></div></header>
+  <div class="blog-body"><p>Running a native-style game engine in a browser requires more than compiling C++ to WebAssembly. The browser has different rules for files, graphics, input and persistence, so the launcher provides a compatibility layer around the re3 engine.</p>
+<h2>WebAssembly and Emscripten</h2><p>Emscripten compiles the C/C++ project to a WebAssembly module plus JavaScript glue code. The JavaScript creates the module, connects the HTML canvas and exposes selected runtime methods such as the virtual filesystem and main entry point.</p>
+<h2>MEMFS for live game files</h2><p>The current runtime expects normal filesystem-style paths. Emscripten MEMFS provides those paths inside the WebAssembly environment. Files extracted from the ZIP become available under the configured game root before re3 starts.</p>
+<h2>OPFS for persistent archive storage</h2><p>MEMFS is session memory, so it disappears after the page closes. OPFS solves a different problem: it can keep the compressed source archive in browser storage across visits. On the next launch the browser reads that local archive and rebuilds the runtime filesystem without another full network download.</p>
+<h2>Diagnostics and frame timing</h2><p>The launcher exposes engine boot stages, input state and frame timing so black screens or startup stalls are easier to diagnose. The runtime also resizes the canvas when the browser viewport or fullscreen state changes.</p>
+<h2>Why this architecture is useful</h2><p>It separates persistent storage from the live engine filesystem. That avoids making the entire game directory an IndexedDB synchronization job while still keeping the expensive network archive cached locally.</p></div>
+  <div class="blog-cta"><h3>Ready to enter Liberty City?</h3><p>Open the GTA III browser launcher, use the one-time OPFS setup, and start the re3 WebAssembly runtime.</p><a href="../#play">▶ Play GTA III</a></div>
+  <div class="blog-related"><h2>More GTA III Guides</h2><div class="blog-related-grid">
+    <a class="blog-related-card" href="gta-3-cheat-codes.html"><span>Cheats</span><strong>GTA III Cheat Codes</strong></a>
+    <a class="blog-related-card" href="gta-3-map-guide.html"><span>Map</span><strong>Liberty City Map Guide</strong></a>
+    <a class="blog-related-card" href="gta-3-hidden-packages.html"><span>Collectibles</span><strong>Hidden Packages Guide</strong></a>
+    <a class="blog-related-card" href="play-gta-3-browser.html"><span>How To</span><strong>Playing GTA III in Browser</strong></a>
+  </div></div>
+</div>
+<footer class="blog-footer"><p><a href="../">GTA III Browser</a> · <a href="./">All Articles</a> · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a></p><p>Independent re3 WebAssembly browser project. Not affiliated with Rockstar Games or Take-Two Interactive.</p></footer>
+</body></html>

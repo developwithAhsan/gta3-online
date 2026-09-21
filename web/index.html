@@ -3,10 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101317">
-  <meta name="description" content="Play your legally owned copy of GTA III in a modern browser using the re3 WebAssembly port.">
-  <title>GTA III — Play in Browser</title>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <meta name="theme-color" content="#131920">
+  <meta name="description" content="Play GTA III in your browser with the re3 WebAssembly runtime. Download once, cache game data in private browser storage, and explore Liberty City.">
+  <meta name="keywords" content="GTA 3 online, GTA III online, play GTA 3 browser, GTA 3 WebAssembly, GTA III browser, Liberty City browser game, GTA 3 guides">
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GTA III Online — Liberty City in Your Browser">
+  <meta property="og:description" content="Run GTA III with a WebAssembly browser runtime, persistent OPFS game cache, guides, controls and troubleshooting.">
+  <meta name="twitter:card" content="summary">
+  <title>GTA III Online — Play Liberty City in Browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=11">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"VideoGame",
+    "name":"Grand Theft Auto III",
+    "alternateName":["GTA III","GTA 3"],
+    "genre":["Action","Open World","Crime"],
+    "gamePlatform":["Web Browser","PC"],
+    "playMode":"SinglePlayer",
+    "description":"A browser launcher for the open-source re3 WebAssembly runtime with persistent local game-data caching."
+  }
+  </script>
 </head>
 <body>
   <noscript>This page requires JavaScript and WebAssembly.</noscript>
@@ -17,9 +38,17 @@
         <span class="brand-mark">III</span>
         <span class="brand-copy">
           <strong>GTA III</strong>
-          <small>Browser Edition</small>
+          <small>Liberty City Browser Edition</small>
         </span>
       </a>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#play">Play</a>
+        <a href="#about">About</a>
+        <a href="#guides">Guides</a>
+        <a href="#faq">FAQ</a>
+        <a href="blog/">Blog</a>
+      </nav>
 
       <div class="runtime-status">
         <span class="status-dot" id="status-dot" data-state="loading"></span>
@@ -37,150 +66,294 @@
       </div>
     </header>
 
-    <main class="game-shell">
-      <section id="viewport" aria-label="GTA III game viewport">
-        <div id="error-banner">
-          <div class="error-title">Runtime error</div>
-          <div class="error-detail" id="error-detail"></div>
+    <main class="page-wrap">
+      <section class="site-hero">
+        <div class="hero-noise" aria-hidden="true"></div>
+        <div class="hero-city" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
         </div>
-
-        <canvas id="canvas" tabindex="-1"></canvas>
-
-        <div id="loading-overlay">
-          <div class="loading-card">
-            <div class="loading-brand">
-              <span class="loading-mark">III</span>
-              <span>LIBERTY CITY</span>
-            </div>
-            <div class="spinner"></div>
-            <h2 id="loading-title">Preparing GTA III</h2>
-            <div id="loading-status">Loading WebAssembly module…</div>
-            <div id="loading-detail">Initializing the browser runtime.</div>
-            <div class="progress-track" aria-label="Loading progress">
-              <div class="progress-fill indeterminate" id="progress-fill"></div>
-            </div>
-            <div class="loading-meta">
-              <span id="loading-percent">Loading…</span>
-              <span id="loading-stage">WASM</span>
-            </div>
+        <div class="site-hero-content">
+          <div class="hero-kicker">LIBERTY CITY • WEBASSEMBLY • OPFS CACHE</div>
+          <h1>Grand Theft Auto <b>III</b></h1>
+          <p class="hero-lead">Experience Liberty City through the re3 WebAssembly runtime. Download the authorized game archive once, keep it in your browser's private OPFS storage, and reuse the local cache on future visits.</p>
+          <div class="hero-actions">
+            <a class="hero-primary" href="#play">▶ Play GTA III</a>
+            <a class="hero-secondary" href="#guides">Read Guides</a>
           </div>
-        </div>
-
-        <div class="hero-layer" aria-hidden="true">
-          <div class="hero-grid"></div>
-          <div class="hero-vignette"></div>
-          <div class="hero-copy">
-            <div class="eyebrow">LIBERTY CITY • WEBASSEMBLY</div>
-            <h1>Grand Theft Auto <span>III</span></h1>
-            <p>Run the open-source re3 engine directly in your browser. Your GTA III files stay on your device.</p>
-          </div>
-        </div>
-
-        <button id="pointerlock-hint" class="hidden" type="button">Click to enable mouse look — Esc to release</button>
-
-        <div id="assets-overlay" class="hidden">
-          <div class="assets-card">
-            <div class="card-kicker">ONE-TIME SETUP</div>
-            <h2>Use your GTA III game files</h2>
-            <p class="assets-hint">
-              Choose the installation folder from a legally obtained PC copy of GTA III.
-              Your ZIP can be cached once in the browser's private OPFS storage. Later visits reuse the cached archive without downloading it again.
-            </p>
-
-            <div class="setup-steps">
-              <div><span>1</span><p><strong>Select folder or ZIP</strong><small>Choose your legally obtained GTA III installation folder or ZIP archive.</small></p></div>
-              <div><span>2</span><p><strong>Cache + validate</strong><small>The ZIP is kept in private browser storage, then extracted into the WASM runtime.</small></p></div>
-              <div><span>3</span><p><strong>Play</strong><small>The launcher starts GTA III and enters a new game automatically.</small></p></div>
-            </div>
-
-            <div id="assets-status" class="asset-status">Checking browser storage…</div>
-            <ul id="assets-missing-list"></ul>
-
-            <div class="assets-actions">
-              <button id="pick-folder-btn" class="primary-btn" type="button">Select GTA III folder</button>
-              <button id="pick-zip-btn" class="primary-btn" type="button">Select & Cache GTA III ZIP</button>
-              <button id="download-play-btn" class="play-btn" type="button">Download & Play</button>
-<button id="clear-cache-btn" type="button">Clear cached ZIP</button>
-              <button id="dev-mount-btn" type="button" style="display:none">Load from dev server</button>
-              <button id="start-engine-btn" class="play-btn" type="button" disabled>Play GTA III</button>
-            </div>
-
-            <div class="legal-note">
-              This project does not include or distribute Rockstar/Take-Two game assets.
-              You must supply your own copy.
-            </div>
-
-            <input type="file" id="folder-input" webkitdirectory multiple hidden>
-            <input type="file" id="zip-input" accept=".zip,application/zip" hidden>
+          <div class="hero-stats" aria-label="Browser features">
+            <div><strong>1×</strong><span>Game archive download</span></div>
+            <div><strong>OPFS</strong><span>Persistent browser cache</span></div>
+            <div><strong>WASM</strong><span>re3 browser runtime</span></div>
           </div>
         </div>
       </section>
 
-      <aside id="sidepanel">
-        <div class="panel-header">
-          <strong>Runtime tools</strong>
-          <span>re3 / WASM</span>
+      <section id="play" class="section-block game-section">
+        <div class="section-heading">
+          <span class="section-kicker">PLAY IN BROWSER</span>
+          <h2>Enter Liberty City</h2>
+          <p>Use Download & Play for the one-time cached setup, or provide your own compatible local GTA III files.</p>
         </div>
 
-        <div class="panel-section" id="boot-progress-section">
-          <h2>Boot progress</h2>
-          <ol id="boot-progress-list">
-            <li data-stage="1">WASM loaded</li>
-            <li data-stage="2">Filesystem initialized</li>
-            <li data-stage="3">Renderer initialized</li>
-            <li data-stage="4">Audio initialized</li>
-            <li data-stage="5">Game data loaded</li>
-            <li data-stage="6">Engine initialized</li>
-            <li data-stage="7">Main menu</li>
-          </ol>
+        <div class="game-shell">
+          <section id="viewport" aria-label="GTA III game viewport">
+            <div id="error-banner">
+              <div class="error-title">Runtime error</div>
+              <div class="error-detail" id="error-detail"></div>
+            </div>
+
+            <canvas id="canvas" tabindex="-1"></canvas>
+
+            <div id="loading-overlay">
+              <div class="loading-card">
+                <div class="loading-brand">
+                  <span class="loading-mark">III</span>
+                  <span>LIBERTY CITY</span>
+                </div>
+                <div class="spinner"></div>
+                <h2 id="loading-title">Preparing GTA III</h2>
+                <div id="loading-status">Loading WebAssembly module…</div>
+                <div id="loading-detail">Initializing the browser runtime.</div>
+                <div class="progress-track" aria-label="Loading progress">
+                  <div class="progress-fill indeterminate" id="progress-fill"></div>
+                </div>
+                <div class="loading-meta">
+                  <span id="loading-percent">Loading…</span>
+                  <span id="loading-stage">WASM</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-layer" aria-hidden="true">
+              <div class="viewport-sky"></div>
+              <div class="viewport-silhouette"></div>
+              <div class="viewport-vignette"></div>
+              <div class="hero-copy">
+                <div class="eyebrow">PORTLAND • STAUNTON • SHORESIDE VALE</div>
+                <h3>LIBERTY<br><span>CITY</span></h3>
+                <p>Crime, traffic, missions and three connected districts — running inside a modern browser runtime.</p>
+              </div>
+            </div>
+
+            <button id="pointerlock-hint" class="hidden" type="button">Click to enable mouse look — Esc to release</button>
+
+            <div id="assets-overlay" class="hidden">
+              <div class="assets-card">
+                <div class="card-kicker">ONE-TIME BROWSER SETUP</div>
+                <h2>Download once. Play from local cache.</h2>
+                <p class="assets-hint">The Download & Play option streams the configured authorized ZIP through the proxy, saves it in private OPFS browser storage, then extracts the required files into the re3 runtime. On later visits the cached ZIP is reused without another full network download.</p>
+
+                <div class="setup-steps">
+                  <div><span>1</span><p><strong>Download</strong><small>Fetch the authorized compressed archive in the background.</small></p></div>
+                  <div><span>2</span><p><strong>Cache</strong><small>Keep the ZIP in Origin Private File System storage.</small></p></div>
+                  <div><span>3</span><p><strong>Launch</strong><small>Extract, validate and start the re3 WebAssembly engine.</small></p></div>
+                </div>
+
+                <div id="assets-status" class="asset-status">Checking browser storage…</div>
+                <ul id="assets-missing-list"></ul>
+
+                <div class="assets-actions">
+                  <button id="download-play-btn" class="play-btn" type="button">▶ Download & Play</button>
+                  <button id="pick-zip-btn" class="primary-btn" type="button">Select & Cache ZIP</button>
+                  <button id="pick-folder-btn" class="primary-btn" type="button">Select GTA III Folder</button>
+                  <button id="clear-cache-btn" class="danger-btn" type="button">Clear Cached ZIP</button>
+                  <button id="dev-mount-btn" type="button" style="display:none">Load from dev server</button>
+                  <button id="start-engine-btn" class="play-btn manual-play" type="button" disabled>Play GTA III</button>
+                </div>
+
+                <div class="legal-note">Independent browser project based on the open-source re3 runtime. GTA III and related trademarks belong to their respective owners. Use game data only where you are authorized to do so.</div>
+
+                <input type="file" id="folder-input" webkitdirectory multiple hidden>
+                <input type="file" id="zip-input" accept=".zip,application/zip" hidden>
+              </div>
+            </div>
+          </section>
+
+          <aside id="sidepanel">
+            <div class="panel-header">
+              <strong>Runtime tools</strong>
+              <span>re3 / WASM</span>
+            </div>
+
+            <div class="panel-section" id="boot-progress-section">
+              <h2>Boot progress</h2>
+              <ol id="boot-progress-list">
+                <li data-stage="1">WASM loaded</li>
+                <li data-stage="2">Filesystem initialized</li>
+                <li data-stage="3">Renderer initialized</li>
+                <li data-stage="4">Audio initialized</li>
+                <li data-stage="5">Game data loaded</li>
+                <li data-stage="6">Engine initialized</li>
+                <li data-stage="7">Main menu</li>
+              </ol>
+            </div>
+
+            <div class="panel-section" id="input-debug-section">
+              <h2>Input debug</h2>
+              <table id="input-summary-table"></table>
+              <div class="input-subhead">Keyboard</div>
+              <div id="input-keys-list" class="input-chip-list">(none)</div>
+              <div class="input-subhead">Mouse</div>
+              <table id="input-mouse-table"></table>
+              <div class="input-subhead">Gamepad</div>
+              <div id="input-gamepad-info">No gamepad connected.</div>
+            </div>
+
+            <div class="panel-section" id="diagnostics-section">
+              <h2>Diagnostics</h2>
+              <table id="diagnostics-table"></table>
+            </div>
+
+            <div class="panel-section" id="perf-section">
+              <h2>Frame timing</h2>
+              <table id="perf-table"></table>
+            </div>
+
+            <div class="panel-section" id="save-section">
+              <h2>Save system</h2>
+              <table id="save-table"></table>
+              <div class="assets-actions compact">
+                <button id="save-force-sync-btn" type="button">Force Save Sync</button>
+                <button id="save-clear-btn" type="button">Clear Browser Saves…</button>
+              </div>
+            </div>
+
+            <div class="panel-section" id="log-section">
+              <h2>Log</h2>
+              <pre id="log-output"></pre>
+            </div>
+          </aside>
         </div>
 
-        <div class="panel-section" id="input-debug-section">
-          <h2>Input debug</h2>
-          <table id="input-summary-table"></table>
-          <div class="input-subhead">Keyboard</div>
-          <div id="input-keys-list" class="input-chip-list">(none)</div>
-          <div class="input-subhead">Mouse</div>
-          <table id="input-mouse-table"></table>
-          <div class="input-subhead">Gamepad</div>
-          <div id="input-gamepad-info">No gamepad connected.</div>
+        <div class="game-utility-row">
+          <button id="share-btn" type="button">↗ Share GTA III</button>
+          <button type="button" onclick="document.getElementById('faq').scrollIntoView({behavior:'smooth'})">Help & FAQ</button>
+          <a href="blog/play-gta-3-browser.html">How browser play works</a>
+        </div>
+      </section>
+
+      <div class="content-layout">
+        <div class="content-main">
+          <section id="about" class="content-card">
+            <div class="content-label">ABOUT THE GAME</div>
+            <h2>GTA III: the game that opened Liberty City</h2>
+            <p>Grand Theft Auto III follows Claude, a silent criminal trying to survive and climb through Liberty City's underworld after a robbery goes wrong. The city is divided into three major areas — Portland, Staunton Island and Shoreside Vale — with missions, gangs, vehicles, weapons and side activities spread throughout the map.</p>
+            <p>This browser project focuses on bringing the open-source re3 runtime to WebAssembly. The launcher handles browser-specific tasks such as persistent archive caching, game-file validation, canvas sizing, fullscreen mode, input diagnostics and save synchronization.</p>
+          </section>
+
+          <section class="content-card">
+            <div class="content-label">BROWSER FEATURES</div>
+            <h2>Built around persistent local game storage</h2>
+            <div class="feature-grid">
+              <article><strong>OPFS Cache</strong><p>The compressed archive can be saved in private browser storage so the large network download is not repeated on every visit.</p></article>
+              <article><strong>Background Worker</strong><p>The download pipeline runs through a worker and reports progress while the site remains responsive.</p></article>
+              <article><strong>Asset Validation</strong><p>The launcher checks the required GTA III data files and important level references before enabling the engine.</p></article>
+              <article><strong>Runtime Diagnostics</strong><p>Open the Diagnostics panel to inspect boot stages, WebGL/runtime status, frame timing and input information.</p></article>
+              <article><strong>Fullscreen Play</strong><p>Use the Fullscreen button to expand the game viewport and let the canvas resize to your display.</p></article>
+              <article><strong>Browser Saves</strong><p>The save subsystem provides browser-side save handling and manual sync tools in the runtime panel.</p></article>
+            </div>
+          </section>
+
+          <section id="guides" class="content-card">
+            <div class="content-label">GTA III GUIDES</div>
+            <h2>Liberty City guides and articles</h2>
+            <div class="guide-grid">
+              <a href="blog/gta-3-cheat-codes.html"><span>CHEATS</span><strong>GTA III Cheat Codes</strong><small>Weapons, health, wanted level, vehicles and chaos codes.</small></a>
+              <a href="blog/gta-3-missions-list.html"><span>WALKTHROUGH</span><strong>GTA III Missions Guide</strong><small>A practical overview of story progression across Liberty City.</small></a>
+              <a href="blog/gta-3-hidden-packages.html"><span>COLLECTIBLES</span><strong>Hidden Packages Guide</strong><small>How the 100-package collectible system and rewards work.</small></a>
+              <a href="blog/gta-3-map-guide.html"><span>MAP</span><strong>Liberty City Map Guide</strong><small>Portland, Staunton Island and Shoreside Vale explained.</small></a>
+              <a href="blog/play-gta-3-browser.html"><span>HOW TO</span><strong>Playing GTA III in Browser</strong><small>OPFS, WebAssembly, local cache and startup explained.</small></a>
+              <a href="blog/gta-3-wasm-technology.html"><span>TECH</span><strong>How re3 Runs with WebAssembly</strong><small>A technical look at the browser runtime and virtual filesystem.</small></a>
+            </div>
+            <a class="all-guides-link" href="blog/">View all GTA III articles →</a>
+          </section>
+
+          <section id="faq" class="content-card">
+            <div class="content-label">HELP</div>
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-list">
+              <details>
+                <summary>What does Download & Play do?<span>+</span></summary>
+                <p>It downloads the configured authorized ZIP through the asset proxy, saves the compressed archive in OPFS, extracts relevant game data into the WebAssembly runtime, validates the files and then starts GTA III automatically.</p>
+              </details>
+              <details>
+                <summary>Will the game ZIP download every time?<span>+</span></summary>
+                <p>No. When OPFS persistence is available and the cached archive remains in browser storage, later visits reuse it. The archive still has to be read and extracted into the runtime's in-memory filesystem for the current session.</p>
+              </details>
+              <details>
+                <summary>Why can the first setup take longer?<span>+</span></summary>
+                <p>The first run includes a network download, browser storage writes, ZIP decompression and validation. Later runs skip the full network download when the OPFS cache is valid.</p>
+              </details>
+              <details>
+                <summary>What should I do if the screen is black or startup stops?<span>+</span></summary>
+                <p>Open Diagnostics and inspect the boot stage, runtime log and asset validation status. A hard refresh can also clear stale page code, but clearing the cached ZIP is only recommended if validation says the archive is incomplete or incompatible.</p>
+              </details>
+              <details>
+                <summary>Can I use my own GTA III files instead?<span>+</span></summary>
+                <p>Yes. The launcher keeps local folder and ZIP options. Select a compatible legally obtained GTA III installation or ZIP and the launcher will validate it before enabling Play.</p>
+              </details>
+              <details>
+                <summary>Is this an official Rockstar website?<span>+</span></summary>
+                <p>No. This is an independent browser project using the open-source re3 runtime. GTA III and related names and trademarks belong to their respective owners.</p>
+              </details>
+            </div>
+          </section>
         </div>
 
-        <div class="panel-section" id="diagnostics-section">
-          <h2>Diagnostics</h2>
-          <table id="diagnostics-table"></table>
-        </div>
-
-        <div class="panel-section" id="perf-section">
-          <h2>Frame timing</h2>
-          <table id="perf-table"></table>
-        </div>
-
-        <div class="panel-section" id="save-section">
-          <h2>Save system</h2>
-          <table id="save-table"></table>
-          <div class="assets-actions compact">
-            <button id="save-force-sync-btn" type="button">Force Save Sync</button>
-            <button id="save-clear-btn" type="button">Clear Browser Saves…</button>
+        <aside class="content-sidebar">
+          <div class="sidebar-card">
+            <h3>Quick controls</h3>
+            <table>
+              <tr><td>W A S D</td><td>Move / drive</td></tr>
+              <tr><td>Mouse</td><td>Camera / aim</td></tr>
+              <tr><td>Enter</td><td>Enter / exit vehicle</td></tr>
+              <tr><td>Space</td><td>Jump / handbrake</td></tr>
+              <tr><td>Esc</td><td>Menu / release pointer</td></tr>
+            </table>
           </div>
-        </div>
 
-        <div class="panel-section" id="log-section">
-          <h2>Log</h2>
-          <pre id="log-output"></pre>
-        </div>
-      </aside>
+          <div class="sidebar-card">
+            <h3>Liberty City</h3>
+            <ul>
+              <li>Portland</li>
+              <li>Staunton Island</li>
+              <li>Shoreside Vale</li>
+              <li>100 hidden packages</li>
+              <li>Story and side missions</li>
+            </ul>
+          </div>
+
+          <div class="sidebar-card">
+            <h3>Browser setup</h3>
+            <p>For the best experience use an up-to-date desktop browser with WebAssembly, WebGL and OPFS support, enough free storage for the cached archive, and sufficient memory for the extracted runtime files.</p>
+          </div>
+        </aside>
+      </div>
     </main>
 
-    <footer>
-      <span>Open-source browser runtime based on re3.</span>
-      <span>GTA III and related marks belong to their respective owners.</span>
+    <footer class="site-footer">
+      <div>
+        <strong>GTA III Browser</strong>
+        <p>Independent re3 WebAssembly browser project. Not affiliated with Rockstar Games or Take-Two Interactive.</p>
+      </div>
+      <div class="footer-links">
+        <a href="blog/">Blog</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="https://github.com/developwithAhsan/gta3-online" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <div class="social-links">
+        <a href="https://github.com/developwithahsan" target="_blank" rel="noopener" aria-label="GitHub">GH</a>
+        <a href="https://x.com/Ahsan29772977" target="_blank" rel="noopener" aria-label="X">X</a>
+        <a href="https://www.instagram.com/ahsan0world" target="_blank" rel="noopener" aria-label="Instagram">IG</a>
+        <a href="https://www.linkedin.com/in/devwithahsan/" target="_blank" rel="noopener" aria-label="LinkedIn">IN</a>
+      </div>
     </footer>
   </div>
 
   <script src="build/re3_wasm.js"></script>
-<script src="asset-source.js?v=1"></script>
-<script src="opfs-cache.js?v=1"></script>
+  <script src="asset-source.js?v=2"></script>
+  <script src="opfs-cache.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
   <script src="vfs.js?v=16"></script>
   <script src="saves.js?v=11"></script>
@@ -188,5 +361,18 @@
   <script src="perf.js?v=10"></script>
   <script src="boot.js?v=10"></script>
   <script src="launcher.js?v=19"></script>
+  <script>
+    document.getElementById('share-btn')?.addEventListener('click', async (event) => {
+      const button = event.currentTarget;
+      if (navigator.share) {
+        try { await navigator.share({title:'GTA III Online', url:location.href}); } catch {}
+      } else {
+        await navigator.clipboard?.writeText(location.href).catch(() => {});
+        const old = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => { button.textContent = old; }, 1600);
+      }
+    });
+  </script>
 </body>
 </html>
