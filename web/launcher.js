@@ -615,15 +615,28 @@
 					return;
 				}
 
-				if (!cfg.archiveUrl) {
+				const downloadUrl = cfg.proxyUrl || cfg.archiveUrl;
+				if (!downloadUrl) {
 					throw new Error(
-						"No authorized archive URL is configured in web/asset-source.js. " +
-						"Set GTA3_ASSET_CONFIG.archiveUrl to a ZIP URL you are authorized to distribute."
+						"No authorized archive source is configured in web/asset-source.js. " +
+						"Set GTA3_ASSET_CONFIG.proxyUrl (recommended) or archiveUrl."
 					);
 				}
 
 				els.downloadPlayBtn.textContent = "Downloading…";
-				await installRemoteArchiveToOPFS(cfg.archiveUrl);
+				try {
+					await installRemoteArchiveToOPFS(downloadUrl);
+				} catch (downloadErr) {
+					const directDrive = !cfg.proxyUrl && /drive\.usercontent\.google\.com|drive\.google\.com/i.test(downloadUrl);
+					if (directDrive && /Failed to fetch|NetworkError|Load failed/i.test(String(downloadErr))) {
+						throw new Error(
+							"Google Drive blocked the browser's cross-origin fetch (CORS). " +
+							"Deploy the included Cloudflare Worker and put its public URL in " +
+							"GTA3_ASSET_CONFIG.proxyUrl. The OPFS downloader will then work normally."
+						);
+					}
+					throw downloadErr;
+				}
 
 				const downloaded = await OPFSAssetCache.getArchiveFile();
 				els.downloadPlayBtn.textContent = "Starting…";

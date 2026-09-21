@@ -1,0 +1,6 @@
+name = "gta3-assets-proxy"
+main = "worker.js"
+compatibility_date = "2026-09-21"
+
+# This Worker streams the authorized GTA III ZIP and adds CORS + Range support
+# for the GitHub Pages OPFS downloader.
