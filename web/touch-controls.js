@@ -27,6 +27,23 @@
 
     radar: { size: 15.0, left: 2.0, top: 2.0 },
     stats: { right: 2.2, top: 2.0 },
+
+    // Explicit desktop/Chromebook sizes prevent touch targets from becoming
+    // visually tiny in short or unusually proportioned PC browser windows.
+    desktopPx: {
+      joystick: 180,
+      joystickKnob: 78,
+      steering: 104,
+      horn: 62,
+      sprint: 92,
+      action: 92,
+      accelerate: 116,
+      brake: 116,
+      handbrake: 72,
+      fire: 80,
+      utility: 58,
+      radar: 92,
+    },
   };
 
   const CONTROL = Object.freeze({
@@ -63,6 +80,11 @@
   };
 
   const vmin = n => `${n}vmin`;
+  const isDesktopHUD = () =>
+    matchMedia("(hover:hover) and (pointer:fine)").matches ||
+    Math.min(window.innerWidth || 0, window.innerHeight || 0) >= 700;
+  const controlSize = (vminSize, desktopPx) =>
+    isDesktopHUD() && desktopPx ? `${desktopPx}px` : vmin(vminSize);
 
   class TouchBridge {
     constructor() {
@@ -171,10 +193,11 @@
       if (label) this.el.setAttribute("aria-label", label);
     }
 
-    setBox({ size, left, right, top, bottom }) {
+    setBox({ size, left, right, top, bottom }, desktopPx = null) {
       if (size != null) {
-        this.el.style.width = vmin(size);
-        this.el.style.height = vmin(size);
+        const value = controlSize(size, desktopPx);
+        this.el.style.width = value;
+        this.el.style.height = value;
       }
       if (left != null) this.el.style.left = vmin(left);
       if (right != null) this.el.style.right = vmin(right);
@@ -194,10 +217,10 @@
       this.base.appendChild(this.knob);
       parent.appendChild(this.base);
       const cfg = TOUCH_CONFIG.joystick;
-      this.base.style.width = this.base.style.height = vmin(cfg.size);
+      this.base.style.width = this.base.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.joystick);
       this.base.style.left = vmin(cfg.left);
       this.base.style.bottom = vmin(cfg.bottom);
-      this.knob.style.width = this.knob.style.height = vmin(cfg.knob);
+      this.knob.style.width = this.knob.style.height = controlSize(cfg.knob, TOUCH_CONFIG.desktopPx.joystickKnob);
       this.bind();
     }
 
@@ -284,7 +307,7 @@
       });
       for (const b of [this.left, this.right]) {
         b.el.style.position = "relative";
-        b.el.style.width = b.el.style.height = vmin(cfg.size);
+        b.el.style.width = b.el.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.steering);
       }
     }
 
@@ -332,7 +355,8 @@
       this.radar.className = "touch-radar-frame";
       this.radar.innerHTML = '<span class="touch-radar-n">N</span>';
       const rc = TOUCH_CONFIG.radar;
-      Object.assign(this.radar.style, { width:vmin(rc.size), height:vmin(rc.size), left:vmin(rc.left), top:vmin(rc.top) });
+      const radarSize = controlSize(rc.size, TOUCH_CONFIG.desktopPx.radar);
+      Object.assign(this.radar.style, { width:radarSize, height:radarSize, left:vmin(rc.left), top:vmin(rc.top) });
       root.appendChild(this.radar);
 
       this.stats = document.createElement("div");
@@ -358,7 +382,7 @@
         onPress: () => this.pressAction(true),
         onRelease: () => this.pressAction(false),
       });
-      this.action.setBox(TOUCH_CONFIG.action);
+      this.action.setBox(TOUCH_CONFIG.action, TOUCH_CONFIG.desktopPx.action);
 
       this.accelerate = this.makeHold("vehicle-control accelerate-btn", ICONS.gas, "Accelerate", CONTROL.CROSS, TOUCH_CONFIG.accelerate);
       this.brake = this.makeHold("vehicle-control brake-btn", ICONS.brake, "Brake or reverse", CONTROL.SQUARE, TOUCH_CONFIG.brake);
@@ -378,7 +402,7 @@
       this.pause = this.makeTapIn(this.utility, ICONS.map, "Pause or menu", CONTROL.START);
       for (const b of [this.weaponCycle, this.pause]) {
         b.el.style.position = "relative";
-        b.el.style.width = b.el.style.height = vmin(TOUCH_CONFIG.utility.size);
+        b.el.style.width = b.el.style.height = controlSize(TOUCH_CONFIG.utility.size, TOUCH_CONFIG.desktopPx.utility);
       }
     }
 
@@ -391,7 +415,14 @@
         onPress: () => this.bridge.set(control, 1),
         onRelease: () => this.bridge.set(control, 0),
       });
-      b.setBox(box);
+      const desktopKey = className.includes("accelerate-btn") ? "accelerate"
+        : className.includes("brake-btn") ? "brake"
+        : className.includes("handbrake-btn") ? "handbrake"
+        : className.includes("horn-btn") ? "horn"
+        : className.includes("sprint-btn") ? "sprint"
+        : className.includes("touch-fire-btn") ? "fire"
+        : null;
+      b.setBox(box, desktopKey ? TOUCH_CONFIG.desktopPx[desktopKey] : null);
       return b;
     }
 
