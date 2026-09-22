@@ -71,6 +71,9 @@ jobs:
           grep -q 'touch-sensitivity-input' web/index.html
           grep -q 'gta3.touchSensitivity' web/index.html
           grep -q 'gta3-touch-sensitivity-change' web/touch-controls.js
+          grep -q 'deadZone: 0.12' web/touch-controls.js
+          grep -q 'refreshLayout()' web/touch-controls.js
+          grep -q 'Touch controls polish v3' web/styles.css
           grep -q 'game-toolbar.js?v=20260922-toolbar2' web/index.html
           grep -q 'game-cheats-btn' web/index.html
           grep -q 'game-more-games-btn' web/index.html
@@ -79,14 +82,14 @@ jobs:
           grep -q 'GUNSGUNSGUNS' web/game-toolbar.js
           grep -q 'CHITTYCHITTYBB' web/game-toolbar.js
           grep -q 're3_BrowserApplyCheat' src/core/Pad.cpp
-          grep -q 'sensitivityCurve' web/touch-controls.js
-          grep -q 'styles.css?v=20260922-toolbar2' web/index.html
+          grep -q 'sensitivityMagnitude' web/touch-controls.js
+          grep -q 'styles.css?v=20260922-controls3' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
           grep -q 'joystick: 180' web/touch-controls.js
           grep -q 'accelerate: 116' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
-          grep -q 'touch-controls.js?v=20260922-touch5' web/index.html
+          grep -q 'touch-controls.js?v=20260922-touch6' web/index.html
           grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
           ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
