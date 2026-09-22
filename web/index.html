@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
 
   <script type="application/ld+json">
   {
@@ -141,19 +141,29 @@
 
           <div id="loading-overlay">
             <div class="loading-card">
-              <p class="loading-wordmark">GTA III</p>
-              <div class="spinner"></div>
-              <h2 id="loading-title">Preparing Liberty City</h2>
-              <div id="loading-status">Loading WebAssembly module…</div>
-              <div id="loading-detail">Initializing the browser runtime.</div>
-              <div class="progress-track">
+              <div class="loading-stage-label" id="loading-stage">WASM</div>
+              <h2 id="loading-title">LOADING...</h2>
+
+              <div class="progress-track" aria-label="Game loading progress">
                 <div class="progress-fill indeterminate" id="progress-fill"></div>
               </div>
-              <div class="loading-meta">
-                <span id="loading-percent">Loading…</span>
-                <span id="loading-stage">WASM</span>
+
+              <div id="loading-percent" class="loading-percent">Loading…</div>
+              <div id="loading-transfer" class="loading-transfer">Preparing browser runtime…</div>
+              <div id="loading-eta" class="loading-eta">Calculating time remaining…</div>
+              <div id="loading-status" class="loading-status">Loading WebAssembly module…</div>
+              <div id="loading-detail" class="loading-detail">Initializing the GTA III browser engine.</div>
+              <div id="loading-resume-note" class="loading-resume-note hidden"></div>
+
+              <div class="loading-time-line">Elapsed <strong id="loading-timer-card">00:00</strong></div>
+
+              <div class="loading-tip-wrap" aria-live="polite">
+                <span class="loading-tip-icon" aria-hidden="true">💡</span>
+                <div>
+                  <span id="loading-tip-category" class="loading-tip-category">GTA III FACT</span>
+                  <p id="loading-tip" class="loading-tip">Liberty City is divided into Portland, Staunton Island and Shoreside Vale.</p>
+                </div>
               </div>
-              <div class="loading-time-line">Elapsed loading time <strong id="loading-timer-card">00:00</strong></div>
             </div>
           </div>
 
@@ -432,7 +442,7 @@
 
   <script src="build/re3_wasm.js"></script>
   <script src="asset-source.js?v=2"></script>
-  <script src="opfs-cache.js?v=2"></script>
+  <script src="opfs-cache.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
   <script src="vfs.js?v=16"></script>
   <script src="saves.js?v=12"></script>
@@ -441,7 +451,7 @@
   <script src="input.js?v=10"></script>
   <script src="perf.js?v=10"></script>
   <script src="boot.js?v=10"></script>
-  <script src="launcher.js?v=20"></script>
+  <script src="launcher.js?v=21"></script>
   <script>
     (() => {
       const playBtn = document.getElementById("play-game-btn");

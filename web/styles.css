@@ -534,3 +534,141 @@ body.game-window-open{overflow:hidden}
   .game-file-row{grid-template-columns:minmax(0,1fr) 80px}
   .game-file-type{display:none}
 }
+
+
+/* Screenshot-inspired GTA III loading experience */
+#loading-overlay{
+  z-index:12;
+  background:#0d1624;
+  backdrop-filter:none;
+}
+.loading-card{
+  width:min(650px,92%);
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  padding:28px 20px 24px;
+  text-align:center;
+}
+.loading-stage-label{
+  min-height:18px;
+  margin-bottom:12px;
+  color:#526c8b;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+}
+#loading-title{
+  margin:0 0 24px;
+  color:#f5f7fb;
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:clamp(34px,6vw,58px);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+.loading-card .progress-track{
+  width:min(440px,90%);
+  height:22px;
+  margin:0 auto;
+  border:1px solid #425774;
+  background:#111d2d;
+  overflow:hidden;
+}
+.loading-card .progress-fill{
+  height:100%;
+  background:#d2deec;
+  transition:width .18s linear;
+}
+.loading-card .progress-fill.indeterminate{
+  width:34%;
+  background:#8ea7c2;
+}
+.loading-percent{
+  margin-top:10px;
+  color:#c3d0df;
+  font-size:14px;
+  font-variant-numeric:tabular-nums;
+}
+.loading-transfer{
+  margin-top:12px;
+  color:#6f89a8;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+}
+.loading-eta{
+  min-height:19px;
+  margin-top:3px;
+  color:#547091;
+  font-size:11px;
+}
+.loading-status{
+  margin-top:13px;
+  color:#8aa0b9;
+  font-size:11px;
+  font-weight:600;
+}
+.loading-detail{
+  min-height:18px;
+  margin:3px auto 0;
+  color:#526a86;
+  font-size:10px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.loading-resume-note{
+  width:min(520px,96%);
+  margin:12px auto 0;
+  padding:8px 10px;
+  border:1px solid rgba(111,145,178,.3);
+  background:rgba(45,65,88,.18);
+  color:#7895b3;
+  font-size:9px;
+  line-height:1.55;
+}
+.loading-time-line{
+  margin-top:9px;
+  color:#435b78;
+  font-size:9px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+.loading-time-line strong{
+  color:#7892ae;
+  font-variant-numeric:tabular-nums;
+}
+.loading-tip-wrap{
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  gap:9px;
+  width:min(500px,94%);
+  min-height:64px;
+  margin:46px auto 0;
+  color:#526f91;
+  text-align:left;
+}
+.loading-tip-icon{flex:0 0 auto;font-size:13px;line-height:1.5}
+.loading-tip-category{
+  display:block;
+  margin-bottom:2px;
+  color:#637f9f;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+#loading-tip{
+  margin:0;
+  color:#526f91;
+  font-size:11px;
+  font-style:italic;
+  line-height:1.55;
+}
+@media(max-width:600px){
+  .loading-card{width:96%;padding:20px 10px}
+  #loading-title{margin-bottom:20px;font-size:34px;letter-spacing:.07em}
+  .loading-card .progress-track{width:92%;height:20px}
+  .loading-tip-wrap{margin-top:34px}
+}

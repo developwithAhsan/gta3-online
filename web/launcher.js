@@ -34,6 +34,11 @@
 		loadingDetail: document.getElementById("loading-detail"),
 		loadingPercent: document.getElementById("loading-percent"),
 		loadingStage: document.getElementById("loading-stage"),
+		loadingTransfer: document.getElementById("loading-transfer"),
+		loadingEta: document.getElementById("loading-eta"),
+		loadingResumeNote: document.getElementById("loading-resume-note"),
+		loadingTip: document.getElementById("loading-tip"),
+		loadingTipCategory: document.getElementById("loading-tip-category"),
 		progressFill: document.getElementById("progress-fill"),
 		errorBanner: document.getElementById("error-banner"),
 		errorDetail: document.getElementById("error-detail"),
@@ -109,6 +114,107 @@
 		return `${(mb / 1024).toFixed(2)} GB`;
 	}
 
+	function formatRate(bytesPerSecond) {
+		if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return "—";
+		return `${formatBytes(bytesPerSecond)}/s`;
+	}
+
+	function formatRemaining(seconds) {
+		if (!Number.isFinite(seconds) || seconds < 0) return "Calculating…";
+		const whole = Math.max(0, Math.ceil(seconds));
+		const mins = Math.floor(whole / 60);
+		const secs = whole % 60;
+		if (mins >= 60) {
+			const hours = Math.floor(mins / 60);
+			const rem = mins % 60;
+			return `${hours}h ${rem}m`;
+		}
+		return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+	}
+
+	function setLoadingTransfer(text) {
+		if (els.loadingTransfer) els.loadingTransfer.textContent = text || "";
+	}
+
+	function setLoadingEta(text) {
+		if (els.loadingEta) els.loadingEta.textContent = text || "";
+	}
+
+	function setResumeNote(text) {
+		if (!els.loadingResumeNote) return;
+		els.loadingResumeNote.textContent = text || "";
+		els.loadingResumeNote.classList.toggle("hidden", !text);
+	}
+
+	function createRateTracker() {
+		let lastTime = performance.now();
+		let lastBytes = null;
+		let smoothed = 0;
+		return {
+			update(loaded, total) {
+				const now = performance.now();
+				if (lastBytes == null) {
+					lastBytes = loaded;
+					lastTime = now;
+					return { speed: 0, eta: null };
+				}
+				const dt = (now - lastTime) / 1000;
+				if (dt >= 0.25) {
+					const delta = Math.max(0, loaded - lastBytes);
+					const instant = delta / dt;
+					smoothed = smoothed > 0 ? (smoothed * 0.72 + instant * 0.28) : instant;
+					lastBytes = loaded;
+					lastTime = now;
+				}
+				const eta = smoothed > 0 && total > loaded ? (total - loaded) / smoothed : null;
+				return { speed: smoothed, eta };
+			},
+			reset(loaded = 0) {
+				lastBytes = loaded;
+				lastTime = performance.now();
+				smoothed = 0;
+			},
+		};
+	}
+
+	const LOADING_TIPS = [
+		{ category: "GTA III FACT", text: "Liberty City is split into Portland, Staunton Island and Shoreside Vale." },
+		{ category: "CONTROL", text: "Use W A S D to move or drive. Enter/F enters and exits vehicles; Space jumps or uses the handbrake." },
+		{ category: "CHEAT", text: "PC cheat: GUNSGUNSGUNS gives Claude a full weapon set. Save before experimenting with cheats." },
+		{ category: "CHEAT", text: "PC cheat: GIVEUSATANK spawns a Rhino tank near Claude." },
+		{ category: "SECRET", text: "The opening bank-robbery scene uses an off-map set often called Ghost Town; it is not a normal playable district." },
+		{ category: "COLLECTIBLE", text: "There are 100 hidden packages. Every 10 packages unlocks another useful pickup at your safehouse." },
+		{ category: "MAP TIP", text: "Portland rewards rooftop, alley and dock exploration; many hidden packages are placed away from mission routes." },
+		{ category: "MAP TIP", text: "Staunton Island has useful shortcuts around Belleville Park and the central road grid—learn them for timed missions." },
+		{ category: "MAP TIP", text: "Shoreside Vale's airport, industrial roads and steep terrain hide collectibles that are easy to miss at driving speed." },
+		{ category: "GTA III FACT", text: "Claude is intentionally silent throughout GTA III, which became one of the game's most recognizable traits." },
+		{ category: "FLYING TIP", text: "The Dodo can stay airborne much longer than it first appears—gentle inputs matter more than aggressive climbing." },
+		{ category: "COMPLETION", text: "GTA III has 20 unique stunt jumps and 20 rampages in addition to its story and phone missions." },
+	];
+
+	let loadingTipIndex = 0;
+	let loadingTipTimer = 0;
+
+	function renderLoadingTip() {
+		if (!els.loadingTip || !els.loadingTipCategory) return;
+		const tip = LOADING_TIPS[loadingTipIndex % LOADING_TIPS.length];
+		els.loadingTipCategory.textContent = tip.category;
+		els.loadingTip.textContent = tip.text;
+		loadingTipIndex++;
+	}
+
+	function startLoadingTips() {
+		if (loadingTipTimer) return;
+		renderLoadingTip();
+		loadingTipTimer = window.setInterval(renderLoadingTip, 6500);
+	}
+
+	function stopLoadingTips() {
+		if (!loadingTipTimer) return;
+		window.clearInterval(loadingTipTimer);
+		loadingTipTimer = 0;
+	}
+
 	function setProgress(fraction /* 0..1, or null for indeterminate */) {
 		if (fraction == null) {
 			els.progressFill.classList.add("indeterminate");
@@ -125,10 +231,12 @@
 
 	function hideLoadingOverlay() {
 		els.loadingOverlay.classList.add("hidden");
+		stopLoadingTips();
 	}
 
 	function showLoadingOverlay() {
 		els.loadingOverlay.classList.remove("hidden");
+		startLoadingTips();
 	}
 
 	const MAX_LOG_LINES = 500;
@@ -496,22 +604,33 @@
 
 	async function extractCachedZipToRuntime(instance, mountPoint, manifest, zipFile, label = "cached ZIP") {
 		showLoadingOverlay();
-		setLoadingTitle("Preparing GTA III");
-		setLoadingStage("OPFS → RAM");
-		setLoadingStatus(`Extracting ${label} into the WebAssembly runtime…`);
-		setLoadingDetail("No network download is needed for this step.");
+		setLoadingTitle("EXTRACTING...");
+		setLoadingStage("LOCAL ZIP → GAME");
+		setLoadingStatus("Writing GTA III files to runtime storage…");
+		setLoadingDetail("Reading the cached archive. No internet download is needed.");
+		setLoadingTransfer(`0 MB / ${formatBytes(zipFile.size || 0)}`);
+		setLoadingEta("Calculating extraction time…");
+		setResumeNote("");
 		setProgress(0);
+		const extractionRate = createRateTracker();
 
 		const n = await AssetVFS.mountFromZipFile(instance.FS, mountPoint, zipFile, {
 			onProgress: (p) => {
 				const fraction = p.compressedTotal > 0 ? p.compressedRead / p.compressedTotal : null;
 				setProgress(fraction);
+				const metric = extractionRate.update(p.compressedRead || 0, p.compressedTotal || 0);
+				setLoadingTransfer(
+					p.compressedTotal > 0
+						? `${formatBytes(p.compressedRead)} / ${formatBytes(p.compressedTotal)} • ${formatRate(metric.speed)}`
+						: `${formatBytes(p.compressedRead)} read • ${formatRate(metric.speed)}`
+				);
+				setLoadingEta(metric.eta != null ? `About ${formatRemaining(metric.eta)} remaining` : "Calculating extraction time…");
 				if (p.phase === "reading-archive") {
-					setLoadingStatus(`Reading ${label}…`);
-					setLoadingDetail(`${formatBytes(p.compressedRead)} / ${formatBytes(p.compressedTotal)} • ${p.filesDone} file(s) extracted`);
+					setLoadingStatus("Reading compressed GTA III archive…");
+					setLoadingDetail(`${p.filesDone} file(s) written to runtime storage`);
 				} else if (p.phase === "extracting") {
 					setLoadingStatus(`Extracting game files — ${p.filesDone} complete`);
-					setLoadingDetail(`${p.currentFile} • ${formatBytes(p.extractedBytes)} extracted to runtime RAM`);
+					setLoadingDetail(p.currentFile || `${formatBytes(p.extractedBytes)} extracted`);
 				}
 			},
 		});
@@ -536,10 +655,12 @@
 			}
 		}
 
-		setLoadingTitle("Checking GTA III files");
-		setLoadingStage("VALIDATION");
+		setLoadingTitle("VERIFYING...");
+		setLoadingStage("GAME FILE CHECK");
 		setLoadingStatus("Validating GTA III game data…");
-		setLoadingDetail("Checking required models, scripts and level-manifest references.");
+		setLoadingDetail("Checking required models, scripts and Liberty City level references.");
+		setLoadingTransfer(`${n} game file(s) prepared`);
+		setLoadingEta("Almost ready…");
 		setProgress(0.99);
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -549,8 +670,11 @@
 		}
 
 		setProgress(1);
+		setLoadingTitle("STARTING...");
+		setLoadingStage("RE3 ENGINE");
 		setLoadingStatus("Game files ready");
 		setLoadingDetail("Starting GTA III automatically…");
+		setLoadingEta("Launching Liberty City…");
 		log("[assets] cached ZIP validated; scheduling automatic engine start", "info");
 		setTimeout(() => els.startEngineBtn.click(), 0);
 		return result;
@@ -558,22 +682,53 @@
 
 	async function installRemoteArchiveToOPFS(url) {
 		showLoadingOverlay();
-		setLoadingTitle("Downloading GTA III archive");
-		setLoadingStage("NETWORK → OPFS");
-		setLoadingStatus("Saving the compressed ZIP in private browser storage…");
-		setLoadingDetail("This is a one-time network download. Future visits reuse the OPFS cache.");
+		setLoadingTitle("DOWNLOADING...");
+		setLoadingStage("NETWORK → BROWSER STORAGE");
+		setLoadingStatus("Downloading GTA III game archive…");
+		setLoadingDetail("The download is saved progressively, so an interrupted transfer can resume.");
+		setLoadingTransfer("Connecting…");
+		setLoadingEta("Calculating time remaining…");
+		setResumeNote("");
 		setProgress(0);
+
+		const downloadRate = createRateTracker();
 
 		await OPFSAssetCache.cacheRemoteUrl(url, {
 			onProgress: (p) => {
 				const fraction = p.total > 0 ? p.loaded / p.total : null;
 				setProgress(fraction);
-				setLoadingStatus("Downloading GTA III archive…");
-				setLoadingDetail(
+
+				if (p.phase === "retrying") {
+					setLoadingTitle("CONNECTION LOST");
+					setLoadingStage("AUTO RESUME");
+					setLoadingStatus(`Retrying download in ${Math.ceil((p.retryInMs || 1000) / 1000)}s…`);
+					setLoadingDetail("Your downloaded data is safe in browser storage.");
+					setLoadingTransfer(
+						p.total > 0
+							? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} safely saved`
+							: `${formatBytes(p.loaded)} safely saved`
+					);
+					setLoadingEta("Waiting to resume…");
+					setResumeNote("Do not refresh. The downloader will continue from the saved byte position when the connection returns.");
+					downloadRate.reset(p.loaded || 0);
+					return;
+				}
+
+				const metric = downloadRate.update(p.loaded || 0, p.total || 0);
+				const isResume = p.phase === "resuming" || p.resumed;
+				setLoadingTitle(isResume ? "RESUMING..." : "DOWNLOADING...");
+				setLoadingStage(isResume ? "RANGE RESUME → OPFS" : "NETWORK → OPFS");
+				setLoadingStatus(isResume ? "Resuming GTA III download from saved progress…" : "Downloading GTA III game archive…");
+				setLoadingDetail(isResume
+					? "The partial archive was found in browser storage; only the remaining bytes are downloading."
+					: "Saving directly into private browser storage for future visits.");
+				setLoadingTransfer(
 					p.total > 0
-						? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} saved to OPFS`
-						: `${formatBytes(p.loaded)} saved to OPFS`
+						? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} • ${formatRate(metric.speed)}`
+						: `${formatBytes(p.loaded)} downloaded • ${formatRate(metric.speed)}`
 				);
+				setLoadingEta(metric.eta != null ? `About ${formatRemaining(metric.eta)} remaining` : "Calculating time remaining…");
+				setResumeNote(isResume ? `Resumed from ${formatBytes(p.resumeFrom || 0)} already downloaded.` : "");
 			},
 		});
 	}
@@ -687,17 +842,26 @@
 				if (window.OPFSAssetCache?.supported()) {
 					await OPFSAssetCache.requestPersistence();
 					showLoadingOverlay();
-					setLoadingTitle("Caching GTA III ZIP");
-					setLoadingStage("ZIP → OPFS");
-					setLoadingStatus("Saving your ZIP in private browser storage…");
+					setLoadingTitle("CACHING...");
+					setLoadingStage("LOCAL ZIP → OPFS");
+					setLoadingStatus("Saving your GTA III ZIP in private browser storage…");
 					setLoadingDetail("This cached ZIP will be reused on later visits.");
+					setLoadingTransfer(`0 MB / ${formatBytes(zipFile.size || 0)}`);
+					setLoadingEta("Calculating time remaining…");
+					setResumeNote("");
 					setProgress(0);
+					const localCacheRate = createRateTracker();
 
 					await OPFSAssetCache.cacheLocalFile(zipFile, {
 						onProgress: (p) => {
 							const fraction = p.total > 0 ? p.loaded / p.total : null;
 							setProgress(fraction);
+							const metric = localCacheRate.update(p.loaded || 0, p.total || 0);
 							setLoadingStatus("Caching GTA III ZIP…");
+							setLoadingTransfer(p.total > 0
+								? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} • ${formatRate(metric.speed)}`
+								: `${formatBytes(p.loaded)} saved • ${formatRate(metric.speed)}`);
+							setLoadingEta(metric.eta != null ? `About ${formatRemaining(metric.eta)} remaining` : "Calculating time remaining…");
 							setLoadingDetail(
 								p.total > 0
 									? `${formatBytes(p.loaded)} / ${formatBytes(p.total)} saved to OPFS`
@@ -966,8 +1130,8 @@
 		// Restore the small native save-slot files before re3 scans its frontend
 		// slots. OPFS access here is tiny compared with the game archive and avoids
 		// the old nested-IDBFS startup stall.
-		setLoadingTitle("Booting GTA III");
-		setLoadingStage("ENGINE");
+		setLoadingTitle("STARTING...");
+		setLoadingStage("RE3 ENGINE");
 		setLoadingStatus("Starting the re3 engine…");
 		setLoadingDetail("Preparing the game filesystem and renderer.");
 		setProgress(0.20);
@@ -1066,8 +1230,8 @@
 		}
 
 		setStatus("loading", "loading WebAssembly module…");
-		setLoadingTitle("Preparing GTA III");
-		setLoadingStage("WASM");
+		setLoadingTitle("LOADING...");
+		setLoadingStage("WEBASSEMBLY ENGINE");
 		setLoadingStatus("Fetching and compiling re3_wasm.wasm…");
 		setLoadingDetail("Loading the browser game engine.");
 		setProgress(null);

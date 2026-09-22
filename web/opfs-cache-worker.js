@@ -1,9 +1,14 @@
 const CACHE_DIR = "_gta3_asset_cache_v1";
 const ARCHIVE_FILE = "game.zip";
 const META_FILE = "meta.json";
+const MAX_RETRIES = 12;
 
 function postProgress(data) {
   self.postMessage({ type: "progress", ...data });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function getCacheDir(create = false) {
@@ -57,7 +62,7 @@ async function openArchiveWritable(offset = 0) {
   return handle.createWritable();
 }
 
-async function copyStreamToOPFS(stream, writable, loadedStart, total, phase) {
+async function copyStreamToOPFS(stream, writable, loadedStart, total, phase, resumeFrom = 0) {
   if (!stream) throw new Error("Download response has no readable body.");
   const reader = stream.getReader();
   let loaded = loadedStart;
@@ -66,7 +71,7 @@ async function copyStreamToOPFS(stream, writable, loadedStart, total, phase) {
     if (done) break;
     await writable.write(value);
     loaded += value.byteLength;
-    postProgress({ phase, loaded, total });
+    postProgress({ phase, loaded, total, resumed: phase === "resuming", resumeFrom });
   }
   return loaded;
 }
@@ -101,103 +106,163 @@ async function cacheLocalFile(file) {
   }
 }
 
+function retryDelay(attempt) {
+  return Math.min(15000, 1500 * Math.pow(1.55, Math.max(0, attempt - 1)));
+}
+
+function retryableStatus(status) {
+  return status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+async function fetchDownload(url, existing) {
+  const headers = existing > 0 ? { Range: "bytes=" + existing + "-" } : undefined;
+  const response = await fetch(url, { headers, redirect: "follow" });
+  if (!response.ok && response.status !== 206) {
+    const err = new Error("Download failed: HTTP " + response.status);
+    err.httpStatus = response.status;
+    throw err;
+  }
+  return response;
+}
+
 async function cacheRemoteUrl(url) {
   const oldMeta = await readMeta();
-  let existing = 0;
   let total = 0;
-  let canResume = false;
 
   if (oldMeta?.source === "remote" && oldMeta?.url === url && !oldMeta.complete) {
-    existing = await getArchiveSize();
     total = Number(oldMeta.total || 0);
-    canResume = existing > 0;
   } else {
     await clearCache();
   }
 
   if (!total) total = await getRemoteSize(url);
 
-  if (canResume && total && existing >= total) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    let existing = await getArchiveSize();
+
+    if (total && existing >= total && existing > 0) {
+      await writeMeta({
+        complete: true,
+        source: "remote",
+        url,
+        size: existing,
+        total,
+        savedAt: new Date().toISOString(),
+      });
+      self.postMessage({ type: "done", size: existing, resumed: true });
+      return;
+    }
+
     await writeMeta({
-      complete: true,
+      complete: false,
       source: "remote",
       url,
       size: existing,
       total,
       savedAt: new Date().toISOString(),
     });
-    self.postMessage({ type: "done", size: existing, resumed: true });
-    return;
-  }
 
-  await writeMeta({
-    complete: false,
-    source: "remote",
-    url,
-    size: existing,
-    total,
-    savedAt: new Date().toISOString(),
-  });
+    let writable = null;
+    try {
+      writable = await openArchiveWritable(existing);
+      let response = await fetchDownload(url, existing);
+      let phase = "downloading";
+      let resumeFrom = 0;
 
-  let writable = await openArchiveWritable(existing);
-  let loaded = existing;
-  let resumed = false;
+      if (existing > 0) {
+        if (response.status === 206) {
+          phase = "resuming";
+          resumeFrom = existing;
+          postProgress({
+            phase: "resuming",
+            loaded: existing,
+            total,
+            resumed: true,
+            resumeFrom,
+          });
+        } else {
+          // Server did not honor Range. Restart safely from zero.
+          try { await writable.close(); } catch {}
+          await clearCache();
+          existing = 0;
+          writable = await openArchiveWritable(0);
+          response = await fetchDownload(url, 0);
+        }
+      }
 
-  try {
-    if (existing > 0) {
-      const response = await fetch(url, {
-        headers: { Range: `bytes=${existing}-` },
-        redirect: "follow",
+      if (!total) {
+        const headerTotal = Number(response.headers.get("content-length") || 0);
+        if (response.status === 206) {
+          const range = response.headers.get("content-range") || "";
+          const match = /\/([0-9]+)$/.exec(range);
+          total = match ? Number(match[1]) : headerTotal + existing;
+        } else {
+          total = headerTotal;
+        }
+      }
+
+      const loaded = await copyStreamToOPFS(
+        response.body,
+        writable,
+        existing,
+        total,
+        phase,
+        resumeFrom
+      );
+      await writable.close();
+      writable = null;
+
+      const finalSize = await getArchiveSize();
+      if (total && finalSize !== total) {
+        throw new Error("Downloaded ZIP size mismatch: got " + finalSize + ", expected " + total);
+      }
+
+      await writeMeta({
+        complete: true,
+        source: "remote",
+        url,
+        size: finalSize || loaded,
+        total: total || finalSize || loaded,
+        savedAt: new Date().toISOString(),
       });
 
-      if (response.status === 206) {
-        resumed = true;
-        loaded = await copyStreamToOPFS(response.body, writable, existing, total, "downloading");
-      } else {
+      self.postMessage({
+        type: "done",
+        size: finalSize || loaded,
+        resumed: resumeFrom > 0,
+      });
+      return;
+    } catch (err) {
+      if (writable) {
         try { await writable.close(); } catch {}
-        await clearCache();
-        existing = 0;
-        loaded = 0;
-        writable = await openArchiveWritable(0);
       }
+
+      const partialSize = await getArchiveSize();
+      await writeMeta({
+        complete: false,
+        source: "remote",
+        url,
+        size: partialSize,
+        total,
+        savedAt: new Date().toISOString(),
+      });
+
+      const status = Number(err?.httpStatus || 0);
+      const canRetry = attempt < MAX_RETRIES && (!status || retryableStatus(status));
+      if (!canRetry) throw err;
+
+      const retryInMs = retryDelay(attempt + 1);
+      postProgress({
+        phase: "retrying",
+        loaded: partialSize,
+        total,
+        retryInMs,
+        attempt: attempt + 1,
+        maxRetries: MAX_RETRIES,
+      });
+      await sleep(retryInMs);
+      // Next loop reads the actual partial file size and sends a Range request.
     }
-
-    if (loaded === 0) {
-      const response = await fetch(url, { redirect: "follow" });
-      if (!response.ok) throw new Error(`Download failed: HTTP ${response.status}`);
-      if (!total) total = Number(response.headers.get("content-length") || 0);
-      loaded = await copyStreamToOPFS(response.body, writable, 0, total, "downloading");
-    }
-
-    await writable.close();
-
-    const finalSize = await getArchiveSize();
-    if (total && finalSize !== total) {
-      throw new Error(`Downloaded ZIP size mismatch: got ${finalSize}, expected ${total}`);
-    }
-
-    await writeMeta({
-      complete: true,
-      source: "remote",
-      url,
-      size: finalSize,
-      total: total || finalSize,
-      savedAt: new Date().toISOString(),
-    });
-
-    self.postMessage({ type: "done", size: finalSize, resumed });
-  } catch (err) {
-    try { await writable.close(); } catch {}
-    const partialSize = await getArchiveSize();
-    await writeMeta({
-      complete: false,
-      source: "remote",
-      url,
-      size: partialSize,
-      total,
-      savedAt: new Date().toISOString(),
-    });
-    throw err;
   }
 }
 
@@ -212,7 +277,7 @@ self.onmessage = async (event) => {
       await cacheRemoteUrl(msg.url);
       return;
     }
-    throw new Error(`Unknown OPFS worker request: ${msg.type}`);
+    throw new Error("Unknown OPFS worker request: " + msg.type);
   } catch (err) {
     self.postMessage({
       type: "error",
