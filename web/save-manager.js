@@ -82,6 +82,8 @@
 
   function triggerLoad(slot) {
     ensureEngineFns();
+    const gs = getGameState ? getGameState() : -1;
+    if (gs < 7) throw new Error("GTA III is still starting. The save is imported; load it when the main menu is ready.");
     if (!loadSlot) throw new Error("Game engine load function is not ready yet.");
     const result = loadSlot(slot);
     if (result !== 1) {
@@ -141,6 +143,12 @@
       await refresh();
 
       ensureEngineFns();
+      const gs = getGameState ? getGameState() : -1;
+      if (gs < 7) {
+        status.textContent = `Slot ${slot + 1} imported and saved. GTA III is still starting; press LOAD when the main menu is ready.`;
+        return;
+      }
+
       if (scanSlot) {
         const code = scanSlot(slot);
         if (code !== 0) {
