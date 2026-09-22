@@ -28,9 +28,10 @@ endif()
 
 set(${PROJECT}_AUDIO "OAL" CACHE STRING "Audio")
 if(EMSCRIPTEN)
-    # The browser build is intentionally silent. The existing null sample
-    # manager satisfies re3's audio API without opening GTA III audio files.
-    set(${PROJECT}_AUDIO "NULL" CACHE STRING "Audio" FORCE)
+    # Browser audio uses the existing OpenAL backend. Emscripten translates the
+    # OpenAL/ALC calls to Web Audio, so the same cSampleManager code drives SFX,
+    # positional audio, radio, mission audio and pause/resume in the browser.
+    set(${PROJECT}_AUDIO "OAL" CACHE STRING "Audio" FORCE)
 endif()
 
 option(${PROJECT}_WITH_OPUS "Build ${EXECUTABLE} with opus support" OFF)

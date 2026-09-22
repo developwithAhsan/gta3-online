@@ -742,3 +742,17 @@ body.game-window-open{overflow:hidden}
   .workspace-entry-actions button{width:100%}
   .workspace-editor{inset:8px}
 }
+
+
+/* Browser audio unlock */
+.audio-unlock-btn{
+  border-color:rgba(108,157,204,.72)!important;
+  background:#20364d!important;
+  color:#dcecff!important;
+  animation:audioUnlockPulse 1.35s ease-in-out infinite;
+}
+.audio-unlock-btn.hidden{display:none!important}
+@keyframes audioUnlockPulse{
+  0%,100%{box-shadow:0 0 0 rgba(116,174,226,0)}
+  50%{box-shadow:0 0 15px rgba(116,174,226,.28)}
+}

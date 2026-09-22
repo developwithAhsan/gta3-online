@@ -1,7 +1,7 @@
 {
   "$comment": "Canonical list of filesystem paths re3 touches, grouped by category (see docs/GAME_ASSETS.md). Contains only relative *paths*, never asset content -- paths are not copyrighted. Consumed by scripts/validate_assets.py (native pre-flight check) and web/vfs.js (in-browser validation before handing off to the engine). Paths are relative to the configured asset root (default mount point /game) and are matched case-insensitively, mirroring src/skel/crossplatform.cpp's casepath().",
   "gameAssets": {
-    "$comment": "Real GTA III data supplied by the user. The browser/WASM build is silent and uses the NULL audio backend, so no audio files are required. 'required' entries are non-audio dependencies the engine needs for gameplay; 'optional' entries may be absent.",
+    "$comment": "Real GTA III data supplied by the user. The browser/WASM build uses OpenAL via Emscripten Web Audio. Core SFX bank files are required; radio/mission/cutscene files in AUDIO are used when present.",
     "required": [
       {
         "path": "data/gta3.dat",
@@ -98,16 +98,20 @@
       {
         "path": "data/fistfite.dat",
         "why": "Fight move table loaded during pedestrian initialization."
+      },
+      {
+        "path": "audio/sfx.SDT",
+        "why": "GTA III SFX descriptor table required by the OpenAL sample manager for engine, weapon, vehicle, frontend and ambient effects."
+      },
+      {
+        "path": "audio/sfx.RAW",
+        "why": "GTA III raw SFX sample bank required by the OpenAL/WebAudio browser backend."
       }
     ],
     "optional": [
       {
         "path": "models/txd.img",
         "why": "Not used by the WebAssembly build. Browser streaming bypasses the generated TXD cache and reads the original texture dictionaries directly, avoiding an expensive per-session cache build in MEMFS."
-      },
-      {
-        "path": "audio",
-        "why": "Not used by the browser/WASM build. WASM uses re3's NULL audio backend, so SFX.SDT, SFX.RAW, radio, mission audio, and the entire audio folder may be absent."
       },
       {
         "path": "movies",
@@ -132,6 +136,10 @@
       {
         "path": "TEXT/spanish.gxt",
         "why": "See english.gxt."
+      },
+      {
+        "path": "audio/*.WAV and audio/*.MP3",
+        "why": "Radio stations, mission dialogue, cutscenes and other streamed audio. The game can still initialize core SFX with sfx.SDT/sfx.RAW, but missing stream files will be silent."
       }
     ]
   },

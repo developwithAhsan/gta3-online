@@ -76,6 +76,15 @@ if(${PROJECT}_AUDIO STREQUAL "OAL")
         target_include_directories(${EXECUTABLE} PRIVATE ${OPENAL_INCLUDE_DIR})
         target_link_libraries(${EXECUTABLE} PRIVATE ${OPENAL_LIBRARY})
         target_compile_definitions(${EXECUTABLE} PRIVATE ${OPENAL_DEFINITIONS})
+    else()
+        # Emscripten provides OpenAL 1.1 itself (backed by Web Audio). It does
+        # not ship AL/efx.h, so use the minimal compile-time shim already kept
+        # in this repository. GTA III retail mission/radio streams include MP3,
+        # decoded through Emscripten's mpg123 port.
+        target_include_directories(${EXECUTABLE} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/audio/oal/emscripten_al"
+        )
+        target_compile_definitions(${EXECUTABLE} PRIVATE AUDIO_OAL_USE_MPG123)
     endif()
     target_compile_definitions(${EXECUTABLE} PRIVATE AUDIO_OAL)
 elseif(${PROJECT}_AUDIO STREQUAL "MSS")
@@ -164,8 +173,8 @@ if(${PROJECT}_INSTALL)
 endif()
 
 if(EMSCRIPTEN)
-    # The WASM target uses the NULL sample manager, so it deliberately does not
-    # link OpenAL/MPG123 or require any GTA III audio files.
+    # The WASM target uses the OpenAL sample manager. Emscripten maps OpenAL to
+    # Web Audio; GTA III SFX/streamed audio comes from the user's asset archive.
     set(EMSCRIPTEN_FLAGS
         -sUSE_GLFW=3
         -sUSE_WEBGL2=1
@@ -179,6 +188,9 @@ if(EMSCRIPTEN)
         -sWASM=1
         -sFORCE_FILESYSTEM=1
         -sEXPORTED_RUNTIME_METHODS=cwrap,ccall,FS,callMain
+        # GTA III's retail streamed mission/radio audio includes MP3 files.
+        # Emscripten supplies the decoder as a built-in port.
+        -sUSE_MPG123=1
         # IDBFS lets web/vfs.js persist the mounted asset root across page loads
         # (task 6C) -- it's a JS library, not linked in by default.
         -lidbfs.js

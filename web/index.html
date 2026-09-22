@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-3">
+  <link rel="stylesheet" href="styles.css?v=20260922-audio1">
 
   <script type="application/ld+json">
   {
@@ -145,6 +145,7 @@
           </div>
           <div class="game-window-actions">
             <button id="save-manager-btn" type="button">Save Manager</button>
+            <button id="audio-unlock-btn" class="audio-unlock-btn hidden" type="button">ENABLE SOUND</button>
             <button id="game-fullscreen-btn" type="button">Fullscreen</button>
             <button id="game-window-close" type="button">Close</button>
           </div>
@@ -535,7 +536,7 @@
   <script src="asset-source.js?v=2"></script>
   <script src="opfs-cache.js?v=20260922-3"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
-  <script src="vfs.js?v=20260922-3"></script>
+  <script src="vfs.js?v=20260922-audio1"></script>
   <script src="saves.js?v=20260922-3"></script>
   <script src="save-manager.js?v=20260922-3"></script>
   <script src="mod-manager.js?v=20260922-3"></script>
@@ -543,7 +544,7 @@
   <script src="input.js?v=20260922-1"></script>
   <script src="perf.js?v=20260922-1"></script>
   <script src="boot.js?v=20260922-1"></script>
-  <script src="launcher.js?v=20260922-3"></script>
+  <script src="launcher.js?v=20260922-audio1"></script>
   <script>
     (() => {
       const playBtn = document.getElementById("play-game-btn");
@@ -551,6 +552,7 @@
       const gameWindow = document.getElementById("game-window");
       const closeBtn = document.getElementById("game-window-close");
       const gameFullscreenBtn = document.getElementById("game-fullscreen-btn");
+      const audioUnlockBtn = document.getElementById("audio-unlock-btn");
       const touchBtn = document.getElementById("touch-controls-toggle");
       const fpsInput = document.getElementById("fps-limit-input");
       const loadingOverlay = document.getElementById("loading-overlay");
@@ -650,6 +652,18 @@
           document.exitFullscreen().catch(() => {});
         }
       }
+
+      window.addEventListener("gta3-audio-unlock-needed", () => {
+        audioUnlockBtn?.classList.remove("hidden");
+      });
+
+      const confirmAudioGesture = () => {
+        if (!audioUnlockBtn || audioUnlockBtn.classList.contains("hidden")) return;
+        audioUnlockBtn.classList.add("hidden");
+      };
+      audioUnlockBtn?.addEventListener("click", confirmAudioGesture);
+      document.addEventListener("pointerdown", confirmAudioGesture, { passive: true });
+      document.addEventListener("keydown", confirmAudioGesture);
 
       window.addEventListener("gta3-launcher-ready", () => {
         playBtn.disabled = false;

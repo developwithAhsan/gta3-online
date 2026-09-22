@@ -1178,6 +1178,11 @@
 
 			log("[module] entering callMain()", "info");
 			const rc = instance.callMain([]);
+			// OpenAL/WebAudio is created during re3 initialisation. Because this
+			// happens after asynchronous asset preparation, the browser may require
+			// one fresh user gesture to resume the AudioContext.
+			window.dispatchEvent(new CustomEvent("gta3-audio-unlock-needed"));
+			setDiag("Audio backend", "OpenAL → Web Audio (gesture unlock armed)", true);
 			setDiag("Engine initialized", "main loop registered", true);
 			setStatus("loading", "GTA III engine running…");
 			log(`[module] main() returned ${rc}; waiting for gameplay state`, "info");

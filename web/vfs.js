@@ -38,11 +38,10 @@
 		const lower = normalized.toLowerCase();
 		const top = lower.split("/")[0];
 
-		// The WebAssembly build uses re3's NULL audio backend. Importing the
-		// original AUDIO folder can add hundreds of MB to MEMFS for data the
-		// engine will never read, which is especially harmful because MEMFS is
-		// resident in browser memory.
-		if (top === "audio" || top === "mss" || top === "movies" || top === "mp3") return true;
+		// Browser audio is real OpenAL/WebAudio, so the original AUDIO folder is
+		// load-bearing and must be imported. Native Windows middleware, movies,
+		// and the optional user-MP3 folder remain unnecessary in this build.
+		if (top === "mss" || top === "movies" || top === "mp3") return true;
 
 		// WASM deliberately bypasses re3\'s generated TXD cache; importing it only wastes RAM.
 		if (lower === "models/txd.img" || lower === "models/txd.dir") return true;

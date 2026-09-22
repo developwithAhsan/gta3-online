@@ -33,6 +33,18 @@ jobs:
       - name: Build re3 WebAssembly runtime
         run: cmake --build build-wasm --target re3_wasm --parallel 4
 
+      - name: Verify browser audio configuration
+        run: |
+          grep -q 'set(${PROJECT}_AUDIO "OAL"' CMakeLists.txt
+          grep -q -- '-sUSE_MPG123=1' src/CMakeLists.txt
+          grep -q 'AUDIO_OAL_USE_MPG123' src/CMakeLists.txt
+          grep -q '"path": "audio/sfx.SDT"' web/asset-manifest.json
+          grep -q '"path": "audio/sfx.RAW"' web/asset-manifest.json
+          if grep -q 'top === "audio"' web/vfs.js; then
+            echo "ERROR: VFS is still skipping the AUDIO folder"
+            exit 1
+          fi
+
       - name: Verify browser bundle
         run: |
           node --check web/vfs.js
