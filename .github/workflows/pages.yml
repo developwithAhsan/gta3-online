@@ -65,8 +65,8 @@ jobs:
           grep -q "gta3-online-homepage" web/index.html
           grep -q 'touch-controls.js' web/index.html
           grep -q 'gta3-touch-hud' web/touch-controls.js
-          grep -q 'joystick: { size: 24.5' web/touch-controls.js
-          grep -q 'accelerate: { size: 17.0' web/touch-controls.js
+          grep -q 'joystick: { size: 28.0' web/touch-controls.js
+          grep -q 'accelerate: { size: 21.0' web/touch-controls.js
           grep -q 'desktopPx:' web/touch-controls.js
           grep -q 'touch-sensitivity-input' web/index.html
           grep -q 'gta3.touchSensitivity' web/index.html
@@ -102,8 +102,8 @@ jobs:
           grep -q 'styles.css?v=20260922-mobile7' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
-          grep -q 'joystick: 180' web/touch-controls.js
-          grep -q 'accelerate: 116' web/touch-controls.js
+          grep -q 'joystick: 196' web/touch-controls.js
+          grep -q 'accelerate: 136' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
           grep -q 'touch-controls.js?v=20260922-touch9' web/index.html
           grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
