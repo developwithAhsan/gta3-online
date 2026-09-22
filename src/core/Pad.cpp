@@ -1157,7 +1157,7 @@ void CPad::AddToPCCheatString(char c)
 extern "C" EMSCRIPTEN_KEEPALIVE int
 re3_BrowserApplyCheat(const char *code)
 {
-	if (code == nil || *code == '\0')
+	if (code == nil || *code == '\0' || FindPlayerPed() == nil)
 		return 0;
 
 	int count = 0;
