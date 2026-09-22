@@ -76,6 +76,9 @@ jobs:
           grep -q 'Touch controls polish v3' web/styles.css
           grep -q 'SVG touch icon set v4' web/styles.css
           grep -q 'Fully responsive touch HUD v5' web/styles.css
+          grep -q 'Mobile game-screen optimization v6' web/styles.css
+          grep -q 'game-toolbar-icon' web/index.html
+          grep -q '100dvh' web/styles.css
           grep -q 'getPlayfieldRect' web/touch-controls.js
           grep -q 'ResizeObserver' web/touch-controls.js
           grep -q 'layoutMetrics' web/touch-controls.js
@@ -91,7 +94,7 @@ jobs:
           grep -q 'CHITTYCHITTYBB' web/game-toolbar.js
           grep -q 're3_BrowserApplyCheat' src/core/Pad.cpp
           grep -q 'sensitivityMagnitude' web/touch-controls.js
-          grep -q 'styles.css?v=20260922-responsive5' web/index.html
+          grep -q 'styles.css?v=20260922-mobile6' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
           grep -q 'joystick: 180' web/touch-controls.js
