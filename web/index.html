@@ -72,6 +72,10 @@
         <div class="primary-play-row">
           <button id="play-game-btn" class="vc-btn-play" type="button" disabled>PLAY GAME</button>
         </div>
+        <div class="home-manager-actions">
+          <button id="home-save-manager-btn" class="vc-btn-secondary home-manager-btn" type="button">SAVE MANAGER</button>
+          <button id="mod-manager-btn" class="vc-btn-secondary home-manager-btn" type="button">MOD MANAGER</button>
+        </div>
 
         <div class="player-settings">
           <div class="player-setting-row">
@@ -249,22 +253,77 @@
         </aside>
         </div>
 
-        <div id="save-manager-overlay" class="save-manager-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="save-manager-title">
-          <div class="save-manager-card">
-            <div class="save-manager-head">
-              <div>
-                <span class="save-manager-kicker">GTA III BROWSER</span>
-                <h2 id="save-manager-title">Save Manager</h2>
-              </div>
-              <button id="save-manager-close" type="button" aria-label="Close save manager">×</button>
-            </div>
-            <p id="save-manager-status" class="save-manager-status">Save storage is preparing…</p>
-            <div id="save-manager-list" class="save-manager-list"></div>
-            <p class="save-manager-help">GTA III uses 8 native save slots. Uploading a compatible <code>.b</code> save places it into the selected slot and immediately loads it after validation.</p>
-            <input id="save-upload-input" type="file" accept=".b,application/octet-stream" hidden>
-          </div>
-        </div>
+
       </section>
+
+      <div id="save-manager-overlay" class="save-manager-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="save-manager-title">
+        <div class="save-manager-card">
+          <div class="save-manager-head">
+            <div>
+              <span class="save-manager-kicker">GTA III BROWSER</span>
+              <h2 id="save-manager-title">Save Manager</h2>
+            </div>
+            <button id="save-manager-close" type="button" aria-label="Close save manager">×</button>
+          </div>
+          <p id="save-manager-status" class="save-manager-status">Save storage is preparing…</p>
+          <div id="save-manager-list" class="save-manager-list"></div>
+          <p class="save-manager-help">GTA III uses 8 native save slots. Uploading a compatible <code>.b</code> save places it into the selected slot and immediately loads it after validation.</p>
+          <input id="save-upload-input" type="file" accept=".b,application/octet-stream" hidden>
+        </div>
+      </div>
+
+      <div id="mod-manager-overlay" class="mod-manager-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mod-manager-title">
+        <div class="mod-manager-card">
+          <div class="mod-manager-head">
+            <div>
+              <span class="mod-manager-kicker">GTA III BROWSER</span>
+              <h2 id="mod-manager-title">Mod Manager</h2>
+            </div>
+            <button id="mod-manager-close" type="button" aria-label="Close mod manager">×</button>
+          </div>
+
+          <div class="mod-warning">
+            <strong>Read before installing mods</strong>
+            <p>Use mods made for the original GTA III PC/re3 file layout. Browser mods are applied only to the temporary runtime copy; the original cached GTA III ZIP is never modified.</p>
+            <ul>
+              <li>Keep core game data available: <code>data/gta3.dat</code>, <code>data/default.dat</code>, <code>data/main.scm</code>, <code>models/gta3.img</code>, <code>models/gta3.dir</code>, <code>anim/ped.ifp</code>, <code>TEXT/american.gxt</code>, <code>data/handling.cfg</code>.</li>
+              <li>Recommended mod ZIP content: replacement files under folders such as <code>models/</code>, <code>data/</code>, <code>anim/</code>, <code>TEXT/</code>.</li>
+              <li>Native code mods such as <code>.exe</code>, <code>.dll</code>, <code>.asi</code>, batch/command files are not supported in the browser and are ignored.</li>
+              <li>Definitive Edition/mobile/console mod packages are usually incompatible with this re3 browser runtime.</li>
+              <li>Install only ZIPs you trust. If a mod breaks startup, disable it and relaunch; the clean base archive remains untouched.</li>
+            </ul>
+          </div>
+
+          <div class="mod-toolbar">
+            <button id="mod-upload-btn" type="button">UPLOAD MOD ZIP</button>
+            <button id="mod-refresh-btn" type="button">REFRESH</button>
+            <button id="game-files-btn" type="button">BROWSE GAME FILES</button>
+          </div>
+          <input id="mod-upload-input" type="file" accept=".zip,application/zip" hidden>
+
+          <p id="mod-manager-status" class="mod-manager-status">Checking local mod storage…</p>
+
+          <div class="mod-tabs">
+            <button id="mods-tab-btn" class="active" type="button">INSTALLED MODS</button>
+            <button id="files-tab-btn" type="button">GAME FILES</button>
+          </div>
+
+          <section id="mods-panel" class="mod-panel">
+            <div id="mod-list" class="mod-list"></div>
+            <p class="mod-help">Enabled mods are applied in the displayed order after the clean GTA III archive is extracted and before asset validation. Changes take effect on the next game launch/reload.</p>
+          </section>
+
+          <section id="files-panel" class="mod-panel hidden">
+            <div class="file-browser-toolbar">
+              <input id="game-file-search" type="search" placeholder="Search files, e.g. models/gta3.img">
+              <span id="game-file-count">0 files</span>
+            </div>
+            <div id="game-file-source" class="file-browser-source">Cached GTA III ZIP</div>
+            <div id="game-file-list" class="game-file-list"></div>
+            <p class="mod-help">This file browser reads the cached GTA III ZIP directly from OPFS, so the file list remains available after refreshing the website without starting the game.</p>
+          </section>
+        </div>
+      </div>
 
       <div class="content-grid">
         <div class="content-main">
@@ -377,7 +436,8 @@
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
   <script src="vfs.js?v=16"></script>
   <script src="saves.js?v=12"></script>
-  <script src="save-manager.js?v=1"></script>
+  <script src="save-manager.js?v=2"></script>
+  <script src="mod-manager.js?v=1"></script>
   <script src="input.js?v=10"></script>
   <script src="perf.js?v=10"></script>
   <script src="boot.js?v=10"></script>

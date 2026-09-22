@@ -517,6 +517,25 @@
 		});
 
 		log(`[assets] extracted ${n} relevant file(s) from ${label} into MEMFS`, "info");
+
+		if (window.GTA3ModManager?.applyEnabledMods) {
+			setLoadingTitle("Applying GTA III mods");
+			setLoadingStage("MODS");
+			setLoadingStatus("Applying enabled mod ZIPs…");
+			setLoadingDetail("Mods overlay the temporary runtime only; the cached base ZIP stays unchanged.");
+			setProgress(null);
+			const modResult = await window.GTA3ModManager.applyEnabledMods(instance.FS, mountPoint, {
+				onProgress: (info) => {
+					setLoadingStatus(`Applying mod ${info.index + 1} of ${info.total}: ${info.name}`);
+					setLoadingDetail(info.currentFile || "Reading mod archive…");
+				},
+				log,
+			});
+			if (modResult.applied > 0) {
+				log(`[mods] applied ${modResult.applied} enabled mod(s), ${modResult.files} file(s) written`, "info");
+			}
+		}
+
 		setLoadingTitle("Checking GTA III files");
 		setLoadingStage("VALIDATION");
 		setLoadingStatus("Validating GTA III game data…");

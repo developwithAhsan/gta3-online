@@ -462,3 +462,75 @@ body.game-window-open{overflow:hidden}
   .save-slot-actions{grid-column:1/-1;grid-template-columns:repeat(2,1fr);width:100%}
   .save-slot-actions button{width:100%}
 }
+
+
+/* Homepage manager buttons */
+.home-manager-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+.home-manager-btn{width:100%;min-height:42px;text-transform:uppercase;letter-spacing:.09em}
+
+/* Save Manager is usable from the homepage as a page-level modal */
+.save-manager-overlay{position:fixed;inset:0;z-index:100000;padding:18px;background:rgba(4,7,11,.88);backdrop-filter:blur(10px)}
+
+/* GTA III Mod Manager */
+.mod-manager-overlay{
+  position:fixed;inset:0;z-index:100001;display:grid;place-items:center;padding:18px;
+  background:rgba(4,7,11,.9);backdrop-filter:blur(10px)
+}
+.mod-manager-card{
+  width:min(1000px,97vw);max-height:92vh;overflow:auto;padding:18px;
+  border:1px solid var(--border-hi);background:linear-gradient(180deg,#182333,#0f161f);
+  box-shadow:0 28px 90px rgba(0,0,0,.65)
+}
+.mod-manager-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.mod-manager-kicker{font-size:9px;font-weight:800;letter-spacing:.16em;color:#6f91b2}
+.mod-manager-head h2{margin:2px 0 0;color:#fff;font-size:26px}
+#mod-manager-close{width:38px;height:38px;border:1px solid var(--border);background:#111925;color:#dbe5ee;font-size:24px;line-height:1}
+.mod-warning{margin:13px 0;padding:13px;border:1px solid rgba(210,169,93,.4);background:rgba(70,54,25,.25)}
+.mod-warning strong{color:#e1c78f}
+.mod-warning p,.mod-warning li{color:#aab8c6;font-size:10px;line-height:1.65}
+.mod-warning ul{margin:8px 0 0;padding-left:19px}
+.mod-warning code{color:#c7d7e7}
+.mod-toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mod-toolbar button,.mod-tabs button,.mod-action-btn{
+  min-height:36px;padding:7px 10px;border:1px solid #32465e;background:#1b2a3b;color:#dce6ef;
+  font-size:9px;font-weight:800;letter-spacing:.07em
+}
+.mod-toolbar button:hover,.mod-tabs button:hover,.mod-action-btn:hover{background:#26394f;border-color:#55749a}
+.mod-manager-status{margin:10px 0;padding:9px 11px;border:1px solid var(--border);background:#101824;color:#91a5b8;font-size:10px}
+.mod-tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.mod-tabs button.active{border-color:#5d7ea3;background:#27394e;color:#fff}
+.mod-panel{padding-top:10px}
+.mod-list{display:flex;flex-direction:column;gap:7px}
+.mod-row{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:11px;border:1px solid var(--border);background:#151f2d
+}
+.mod-main{min-width:0}
+.mod-main strong{display:block;color:#e5edf4;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mod-main small{display:block;margin-top:3px;color:#6e8498;font-size:9px}
+.mod-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.mod-badge{padding:2px 5px;border:1px solid #334960;color:#87a0b8;font-size:8px}
+.mod-badge.on{border-color:rgba(80,168,120,.55);color:#9ed5b6}
+.mod-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.mod-action-btn.danger{color:#da9a9a;border-color:rgba(192,80,80,.4)}
+.mod-help{margin:10px 0 0;color:#667d92;font-size:9px;line-height:1.6}
+.file-browser-toolbar{display:flex;align-items:center;gap:10px}
+#game-file-search{flex:1;min-width:0;padding:9px;border:1px solid var(--border-hi);background:#111925;color:#fff;outline:none}
+#game-file-count{white-space:nowrap;color:#7890a8;font-size:9px}
+.file-browser-source{margin-top:8px;color:#6f91b2;font-size:9px;text-transform:uppercase;letter-spacing:.1em}
+.game-file-list{margin-top:8px;max-height:52vh;overflow:auto;border:1px solid var(--border);background:#0d141d}
+.game-file-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:10px;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.04);font:9px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace}
+.game-file-row:last-child{border-bottom:0}
+.game-file-name{color:#c9d6e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-file-size,.game-file-type{color:#667f96;text-align:right}
+.mod-empty{padding:24px;border:1px dashed var(--border);color:#6d8296;text-align:center;font-size:10px}
+@media(max-width:700px){
+  .mod-manager-overlay,.save-manager-overlay{padding:7px}
+  .mod-manager-card{width:100%;max-height:97vh;padding:12px}
+  .mod-toolbar{grid-template-columns:1fr}
+  .mod-row{grid-template-columns:1fr}
+  .mod-actions{justify-content:stretch;display:grid;grid-template-columns:repeat(2,1fr)}
+  .mod-action-btn{width:100%}
+  .game-file-row{grid-template-columns:minmax(0,1fr) 80px}
+  .game-file-type{display:none}
+}
