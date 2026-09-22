@@ -15,19 +15,19 @@
     // Sized against a typical 800-900 x 430-500 landscape phone:
     // joystick ~110-125px, action buttons ~58-65px,
     // steering ~65-72px, pedals ~78-85px and utility ~38-42px.
-    joystick: { size: 24.5, knob: 10.5, left: 3.0, bottom: 4.0 },
-    steering: { size: 14.5, gap: 1.6, left: 3.0, bottom: 5.0 },
-    horn: { size: 8.5, left: 27.0, bottom: 21.0 },
+    joystick: { size: 28.0, knob: 12.0, left: 3.0, bottom: 4.0, zoneWidth: 50 },
+    steering: { size: 19.0, gap: 2.0, left: 3.0, bottom: 4.5 },
+    horn: { size: 11.5, left: 31.0, bottom: 24.0 },
 
-    sprint: { size: 13.0, right: 3.5, bottom: 13.5 },
-    action: { size: 13.0, right: 17.0, bottom: 28.0 },
+    sprint: { size: 15.5, right: 3.0, bottom: 13.0 },
+    action: { size: 15.5, right: 19.0, bottom: 29.0 },
 
-    accelerate: { size: 17.0, right: 3.5, bottom: 12.0 },
-    brake: { size: 17.0, right: 21.5, bottom: 12.0 },
-    handbrake: { size: 10.5, right: 35.0, bottom: 28.0 },
+    accelerate: { size: 21.0, right: 3.0, bottom: 10.0 },
+    brake: { size: 21.0, right: 25.0, bottom: 10.0 },
+    handbrake: { size: 13.5, right: 43.0, bottom: 28.0 },
 
-    fire: { size: 11.0, right: 3.0, top: 12.0 },
-    utility: { size: 8.5, gap: 1.5, right: 2.5, bottom: 2.0 },
+    fire: { size: 13.5, right: 3.0, top: 13.0 },
+    utility: { size: 9.5, gap: 1.8, right: 2.5, bottom: 2.0 },
 
     radar: { size: 15.0, left: 2.0, top: 2.0 },
     stats: { right: 2.2, top: 2.0 },
@@ -35,17 +35,17 @@
     // Baseline desktop targets. Responsive sizing may grow up to ~15% above
     // these values on large displays and shrink safely on compact screens.
     desktopPx: {
-      joystick: 180,
-      joystickKnob: 78,
-      steering: 104,
-      horn: 62,
-      sprint: 92,
-      action: 92,
-      accelerate: 116,
-      brake: 116,
-      handbrake: 72,
-      fire: 80,
-      utility: 58,
+      joystick: 196,
+      joystickKnob: 88,
+      steering: 122,
+      horn: 76,
+      sprint: 104,
+      action: 104,
+      accelerate: 136,
+      brake: 136,
+      handbrake: 88,
+      fire: 94,
+      utility: 66,
       radar: 92,
     },
   };
@@ -381,49 +381,100 @@
     constructor(parent, bridge) {
       this.bridge = bridge;
       this.pointerId = null;
+      this.originX = 0;
+      this.originY = 0;
+      this.floating = false;
+
+      // Invisible left-half activation surface. Touching anywhere here starts
+      // movement and places the visual joystick under the player's thumb.
+      this.zone = document.createElement("div");
+      this.zone.className = "touch-joystick-zone on-foot-control";
+      this.zone.setAttribute("aria-label", "Movement area");
+      parent.appendChild(this.zone);
+
       this.base = document.createElement("div");
       this.base.className = "touch-joystick on-foot-control";
       this.knob = document.createElement("div");
       this.knob.className = "touch-joystick-knob";
       this.base.appendChild(this.knob);
       parent.appendChild(this.base);
+
       this.refreshLayout();
       this.bind();
     }
 
     bind() {
-      this.base.addEventListener("pointerdown", e => {
+      const begin = e => {
         if (this.pointerId !== null) return;
+        if (e.pointerType === "mouse" && e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
+
         this.pointerId = e.pointerId;
-        this.base.setPointerCapture?.(e.pointerId);
+        this.zone.setPointerCapture?.(e.pointerId);
+        this.placeAtPointer(e);
+        this.base.classList.add("is-engaged");
+        pulseHaptic();
         this.update(e);
-      });
-      this.base.addEventListener("pointermove", e => {
+      };
+
+      this.zone.addEventListener("pointerdown", begin);
+
+      this.zone.addEventListener("pointermove", e => {
         if (e.pointerId !== this.pointerId) return;
         e.preventDefault();
         this.update(e);
       });
+
       const end = e => {
         if (e.pointerId !== this.pointerId) return;
         e.preventDefault();
         this.pointerId = null;
+        this.base.classList.remove("is-active", "is-engaged");
         this.knob.style.transform = "translate(-50%,-50%)";
         this.bridge.set(CONTROL.LEFT_X, 0);
         this.bridge.set(CONTROL.LEFT_Y, 0);
+        this.restoreIdlePosition();
       };
-      this.base.addEventListener("pointerup", end);
-      this.base.addEventListener("pointercancel", end);
-      this.base.addEventListener("lostpointercapture", end);
+
+      this.zone.addEventListener("pointerup", end);
+      this.zone.addEventListener("pointercancel", end);
+      this.zone.addEventListener("lostpointercapture", end);
+      this.zone.addEventListener("contextmenu", e => e.preventDefault());
+    }
+
+    placeAtPointer(e) {
+      const rootRect = this.base.parentElement?.getBoundingClientRect?.();
+      if (!rootRect) return;
+
+      const size = this.base.getBoundingClientRect().width || parseFloat(this.base.style.width) || 100;
+      const half = size / 2;
+      const margin = Math.max(8, layoutMetrics.short * 0.015);
+      const maxCenterX = Math.max(half + margin, layoutMetrics.width * 0.5 - half - margin);
+      const maxCenterY = Math.max(half + margin, layoutMetrics.height - half - margin);
+
+      const localX = e.clientX - rootRect.left;
+      const localY = e.clientY - rootRect.top;
+      const cx = Math.max(half + margin, Math.min(maxCenterX, localX));
+      const cy = Math.max(half + margin, Math.min(maxCenterY, localY));
+
+      this.originX = cx;
+      this.originY = cy;
+      this.floating = true;
+
+      this.base.style.left = `${Math.round(cx - half)}px`;
+      this.base.style.top = `${Math.round(cy - half)}px`;
+      this.base.style.right = "auto";
+      this.base.style.bottom = "auto";
     }
 
     update(e) {
+      const rootRect = this.base.parentElement?.getBoundingClientRect?.();
+      if (!rootRect) return;
+
+      const dx = (e.clientX - rootRect.left) - this.originX;
+      const dy = (e.clientY - rootRect.top) - this.originY;
       const r = this.base.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
       const max = r.width * TOUCH_CONFIG.knobTravel;
       const rawLen = Math.hypot(dx, dy);
       const len = rawLen || 1;
@@ -452,18 +503,34 @@
 
     refreshLayout() {
       const cfg = TOUCH_CONFIG.joystick;
-      this.base.style.width = this.base.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.joystick);
+      const size = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.joystick);
+      this.base.style.width = this.base.style.height = size;
+      this.knob.style.width = this.knob.style.height = controlSize(cfg.knob, TOUCH_CONFIG.desktopPx.joystickKnob);
+
+      this.zone.style.left = "0";
+      this.zone.style.top = "0";
+      this.zone.style.bottom = "0";
+      this.zone.style.width = `${cfg.zoneWidth || 50}%`;
+
+      if (this.pointerId === null) this.restoreIdlePosition();
+    }
+
+    restoreIdlePosition() {
+      const cfg = TOUCH_CONFIG.joystick;
+      this.floating = false;
       this.base.style.left = vmin(cfg.left);
       this.base.style.bottom = vmin(cfg.bottom);
-      this.knob.style.width = this.knob.style.height = controlSize(cfg.knob, TOUCH_CONFIG.desktopPx.joystickKnob);
+      this.base.style.top = "auto";
+      this.base.style.right = "auto";
     }
 
     reset() {
       this.pointerId = null;
-      this.base.classList.remove("is-active");
+      this.base.classList.remove("is-active", "is-engaged");
       this.knob.style.transform = "translate(-50%,-50%)";
       this.bridge.set(CONTROL.LEFT_X, 0);
       this.bridge.set(CONTROL.LEFT_Y, 0);
+      this.restoreIdlePosition();
     }
   }
 
