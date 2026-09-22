@@ -106,7 +106,8 @@ re3TouchButtonValue(int value)
 extern "C" EMSCRIPTEN_KEEPALIVE void
 re3_BrowserTouchSet(int control, int value)
 {
-	value = Clamp(value, -127, 127);
+	if (value < -127) value = -127;
+	if (value > 127) value = 127;
 	switch (control) {
 	case RE3_TOUCH_LEFT_X: g_re3BrowserTouchState.LeftStickX = (int16)value; break;
 	case RE3_TOUCH_LEFT_Y: g_re3BrowserTouchState.LeftStickY = (int16)value; break;
