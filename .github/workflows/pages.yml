@@ -77,6 +77,11 @@ jobs:
           grep -q 'SVG touch icon set v4' web/styles.css
           grep -q 'Fully responsive touch HUD v5' web/styles.css
           grep -q 'Mobile game-screen optimization v6' web/styles.css
+          grep -q 'Floating joystick + larger driving controls v7' web/styles.css
+          grep -q 'touch-joystick-zone' web/touch-controls.js
+          grep -q 'zoneWidth: 50' web/touch-controls.js
+          grep -q 'steering: { size: 19.0' web/touch-controls.js
+          grep -q 'accelerate: { size: 21.0' web/touch-controls.js
           grep -q 'game-toolbar-icon' web/index.html
           grep -q '100dvh' web/styles.css
           grep -q 'getPlayfieldRect' web/touch-controls.js
@@ -94,13 +99,13 @@ jobs:
           grep -q 'CHITTYCHITTYBB' web/game-toolbar.js
           grep -q 're3_BrowserApplyCheat' src/core/Pad.cpp
           grep -q 'sensitivityMagnitude' web/touch-controls.js
-          grep -q 'styles.css?v=20260922-mobile6' web/index.html
+          grep -q 'styles.css?v=20260922-mobile7' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
           grep -q 'joystick: 180' web/touch-controls.js
           grep -q 'accelerate: 116' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
-          grep -q 'touch-controls.js?v=20260922-touch8' web/index.html
+          grep -q 'touch-controls.js?v=20260922-touch9' web/index.html
           grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
           ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
