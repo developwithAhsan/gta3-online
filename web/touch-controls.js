@@ -65,21 +65,90 @@
     L2: 12,
   });
 
+  // Crisp inline SVG icons: no icon font, CDN, image request or external dependency.
+  // Every icon uses the same 32x32 grid and inherits the button's currentColor.
   const ICONS = {
-    run: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="14.6" cy="4.3" r="2" fill="currentColor" stroke="none"/><path d="m11.4 8.1 3.5 2.1 3.2.5M11.4 8.1 8.7 12l-3.5 1.1m8.3-2.8-2.1 4.1-4 4.3m4-4.3 4.6 4.1" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    jump: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5 8 4.5l3 3M8 4.8v5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.7" cy="5.3" r="1.8" fill="currentColor" stroke="none"/><path d="m13.3 9 2.7 2.2 3.4-.4m-6.1-1.8-2.7 3.6 3.1 2.2 2.1-3m-2.1 3-3 4.1m3-4.1 4.1 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    car: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5.4 10.2 1.7-4h9.8l1.7 4 1.5 1.4v5.7h-2.2v-1.8H6.1v1.8H3.9v-5.7l1.5-1.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.2 10.2h11.6M6.7 13.1h2.2m6.2 0h2.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
-    exit: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 16.2V9.7l1.4-3.5h8.3l1.1 2.6M6.5 12.2h5.7M6.3 15h2.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15.4h7m0 0-2.5-2.5m2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    fist: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.1 11V7.6a1.7 1.7 0 0 1 3.4 0v2.2-4a1.7 1.7 0 0 1 3.4 0v4.1-2.8a1.7 1.7 0 0 1 3.4 0v5.1c0 4.5-2.7 7.3-6.5 7.3-3.4 0-6.1-2.4-7-5.5l-.7-2.4A1.7 1.7 0 0 1 6.2 10l2 3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    gun: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 9.3h10.5l4.7 2.5-1.9 2.5h-5.1L10 19H6.7l1.6-4.7H3.2V9.3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 9.3V7.2h3.8M5 11.6h4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
-    gas: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.1h5.4l2.4 13.8H6.9L9.3 5.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10.2 9h3.6m-4.2 3h4.8m-5.3 3h5.8M12 3v3m0-3-2 2m2-2 2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    brake: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.1h5.4l2.4 13.8H6.9L9.3 5.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.4 10h5.2m-4.7 3h4.2m-3.7 3h3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
-    handbrake: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17.5h9.1l3.7-8.3h1.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.6 17.5 2.9 2M4 15.2v4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
-    horn: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13h4l6 4V7l-6 4h-4v2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16.4 9.1c1.8 1.5 1.8 4.3 0 5.8m2.4-8.1c3.1 2.9 3.1 7.5 0 10.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
-    grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="4" y="4" width="4" height="4" rx=".7"/><rect x="10" y="4" width="4" height="4" rx=".7"/><rect x="16" y="4" width="4" height="4" rx=".7"/><rect x="4" y="10" width="4" height="4" rx=".7"/><rect x="10" y="10" width="4" height="4" rx=".7"/><rect x="16" y="10" width="4" height="4" rx=".7"/><rect x="4" y="16" width="4" height="4" rx=".7"/><rect x="10" y="16" width="4" height="4" rx=".7"/><rect x="16" y="16" width="4" height="4" rx=".7"/></g></svg>`,
-    map: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 5.8 5-2.1 6.2 2.1 5.2-2.1v14.5l-5.2 2.1-6.2-2.1-5 2.1V5.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.8 3.7v14.5M15 5.8v14.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`,
-    left: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.8 4.8-7.2 7.2 7.2 7.2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    right: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.2 4.8 7.2 7.2-7.2 7.2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    run: `<svg class="touch-icon touch-icon-run" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="20.5" cy="6.1" r="3.2" fill="currentColor"/>
+      <path d="M17.4 11.2 22 14l5.1.8M17.4 11.2l-4.3 5.3-5.5 1.8m10.8-4.6-3.2 6.2-6.3 6.4m6.3-6.4 6.8 6.1"
+        fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+
+    jump: `<svg class="touch-icon touch-icon-jump" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M7 12V4m0 0-4 4m4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20.5" cy="7.1" r="3" fill="currentColor"/>
+      <path d="m17.5 12.2 4.6 3.4 5.2-.5m-9.8-2.9-4.3 5.7 5 3.5 3.5-4.7m-3.5 4.7-4.6 6m4.6-6 6 5"
+        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+
+    car: `<svg class="touch-icon touch-icon-car" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="m6 15.2 3.1-7.1h13.8l3.1 7.1 2.4 2.1v7.2H25v-2.8H7v2.8H3.6v-7.2L6 15.2Z"
+        fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M7.2 15.2h17.6M8.2 18.8h4m7.6 0h4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="9.2" cy="23.2" r="1.4" fill="currentColor"/><circle cx="22.8" cy="23.2" r="1.4" fill="currentColor"/>
+    </svg>`,
+
+    exit: `<svg class="touch-icon touch-icon-exit" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M4.5 20.5v-8l2.3-5.4h11.4l2 4.6M7.2 16h10.2M7.5 20h3.6"
+        fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M17 22h10m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+
+    fist: `<svg class="touch-icon touch-icon-fist" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M9.2 15.5v-5.1a2.5 2.5 0 0 1 5 0v3.2-6.1a2.5 2.5 0 1 1 5 0v6.2-4.4a2.5 2.5 0 0 1 5 0v7.9c0 6.2-4 10.2-9.5 10.2-5 0-8.8-3.4-10.1-8l-1.1-3.7a2.5 2.5 0 0 1 4.6-1.8l3.1 4.4"
+        fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9.2 13.5h15" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round"/>
+    </svg>`,
+
+    gun: `<svg class="touch-icon touch-icon-gun" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M4.2 12h15.3l7 3.4-2.5 4.2h-7.5l-2.1 7.2H9.2l2.4-7.2H4.2V12Z"
+        fill="none" stroke="currentColor" stroke-width="2.35" stroke-linejoin="round"/>
+      <path d="M19.4 12V8.5h6M7 15.6h7.5" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round"/>
+    </svg>`,
+
+    gas: `<svg class="touch-icon touch-icon-gas" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="8.5" y="8" width="15" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2.3"/>
+      <path d="M12 21.5 16 11l4 10.5M16 11v11.2" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="m16 5-3 3m3-3 3 3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+    </svg>`,
+
+    brake: `<svg class="touch-icon touch-icon-brake" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="8.5" y="7" width="15" height="19" rx="4" fill="none" stroke="currentColor" stroke-width="2.3"/>
+      <path d="M12 12h8M11.5 16h9M12 20h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`,
+
+    handbrake: `<svg class="touch-icon touch-icon-handbrake" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M5 24h14l6-13.5h2.5" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="m18.5 24 4.2 3M5 20v7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="25.8" cy="9.6" r="2.3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+    </svg>`,
+
+    horn: `<svg class="touch-icon touch-icon-horn" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M5 18h5.4l8.6 5.5v-15L10.4 14H5v4Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M22.5 12.1c2.6 2.2 2.6 5.6 0 7.8m3.8-11.4c4.5 4.1 4.5 10.9 0 15"
+        fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+    </svg>`,
+
+    grid: `<svg class="touch-icon touch-icon-weapons" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <circle cx="16" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M16 5v6m0 10v6M5 16h6m10 0h6M8.2 8.2l4.2 4.2m7.2 7.2 4.2 4.2M23.8 8.2l-4.2 4.2m-7.2 7.2-4.2 4.2"
+        fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </svg>`,
+
+    map: `<svg class="touch-icon touch-icon-map" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="m4.5 7.5 7-3 9 3 7-3v20l-7 3-9-3-7 3v-20Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M11.5 4.5v20M20.5 7.5v20" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M16 12.2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 6v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
+
+    left: `<svg class="touch-icon touch-icon-left" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M21.5 6.5 12 16l9.5 9.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+
+    right: `<svg class="touch-icon touch-icon-right" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="m10.5 6.5 9.5 9.5-9.5 9.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
   };
 
   const vmin = n => `${n}vmin`;
