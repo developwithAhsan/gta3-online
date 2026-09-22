@@ -1701,7 +1701,7 @@ body.game-window-open{overflow:hidden}
 }
 .game-toolbar-label{pointer-events:none}
 
-@media(max-width:760px){
+@media(max-width:760px), (pointer:coarse) and (max-height:650px){
   .game-window{
     width:100dvw;
     height:100dvh;
