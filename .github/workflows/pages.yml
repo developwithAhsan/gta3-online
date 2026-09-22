@@ -65,8 +65,10 @@ jobs:
           grep -q "gta3-online-homepage" web/index.html
           grep -q 'touch-controls.js' web/index.html
           grep -q 'gta3-touch-hud' web/touch-controls.js
+          grep -q 'joystick: { size: 24.5' web/touch-controls.js
+          grep -q 'accelerate: { size: 17.0' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
-          grep -q 'touch-controls.js?v=20260922-touch2' web/index.html
+          grep -q 'touch-controls.js?v=20260922-touch3' web/index.html
           grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
           ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
