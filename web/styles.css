@@ -783,7 +783,7 @@ body.game-window-open{overflow:hidden}
   position:absolute;
   inset:0;
   z-index:-2;
-  background-image:url("images/gta3-about-slideshow.webp");
+  background-image:url("images/gta3-about-slideshow.webp?v=20260922-1");
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;
