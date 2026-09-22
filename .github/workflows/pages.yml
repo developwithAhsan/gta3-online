@@ -76,6 +76,35 @@ jobs:
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin gh-pages
 
+      - name: Notify IndexNow
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import json, urllib.request, xml.etree.ElementTree as ET
+          host = "developwithahsan.github.io"
+          key = "7c4f9d2a13b84e61a52f0c9d7e31b468"
+          sitemap = ET.parse("web/sitemap.xml")
+          ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          urls = [x.text for x in sitemap.findall(".//s:loc", ns) if x.text]
+          payload = json.dumps({
+              "host": host,
+              "key": key,
+              "keyLocation": f"https://{host}/gta3-online/{key}.txt",
+              "urlList": urls,
+          }).encode()
+          req = urllib.request.Request(
+              "https://api.indexnow.org/indexnow",
+              data=payload,
+              headers={"Content-Type": "application/json; charset=utf-8"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  print("IndexNow status:", response.status)
+          except Exception as exc:
+              print("IndexNow notification failed:", exc)
+          PY
+
       - name: Deployment summary
         run: |
           echo "### GTA III browser build published" >> "$GITHUB_STEP_SUMMARY"
