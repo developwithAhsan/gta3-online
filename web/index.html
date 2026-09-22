@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#131920">
   <meta name="description" content="Play GTA III in your browser with the re3 WebAssembly runtime, OPFS cache, fullscreen play and FPS controls. Read detailed GTA 3 browser, troubleshooting, mission, cheat and Liberty City guides.">
@@ -22,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=20260922-1">
 
   <script type="application/ld+json">
   {
@@ -48,6 +51,20 @@
     "playMode":"SinglePlayer"
   }
   </script>
+  <style id="critical-ui-v20260922-1">
+    .home-manager-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin-top:8px!important}
+    .home-manager-btn{display:block!important;width:100%!important;min-height:44px!important;visibility:visible!important;opacity:1!important}
+    #loading-overlay:not(.hidden){display:grid!important;position:absolute!important;inset:0!important;z-index:50!important;background:#0d1624!important}
+    #loading-overlay .loading-card{width:min(650px,92%)!important;border:0!important;background:transparent!important;box-shadow:none!important;text-align:center!important}
+    #loading-overlay #loading-title{color:#f5f7fb!important;font-size:clamp(34px,6vw,58px)!important;font-weight:800!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+    #loading-overlay .progress-track{width:min(440px,90%)!important;height:22px!important;margin:20px auto 0!important;border:1px solid #425774!important;background:#111d2d!important}
+    #loading-overlay .progress-fill{height:100%!important;background:#d2deec!important}
+    #loading-overlay .loading-percent{margin-top:10px!important;color:#c3d0df!important;font-size:14px!important}
+    #loading-overlay .loading-transfer{margin-top:12px!important;color:#6f89a8!important;font-size:12px!important}
+    #loading-overlay .loading-eta{margin-top:3px!important;color:#547091!important;font-size:11px!important}
+    #loading-overlay .loading-tip-wrap{display:flex!important;gap:9px!important;width:min(500px,94%)!important;margin:40px auto 0!important;color:#526f91!important;text-align:left!important}
+    #ui-build-marker{margin-top:8px;color:#40566f;font-size:8px;letter-spacing:.08em;text-align:center}
+  </style>
 </head>
 <body>
   <noscript>This page requires JavaScript and WebAssembly.</noscript>
@@ -115,6 +132,7 @@
           <button id="input-debug-btn" type="button" tabindex="-1">Input</button>
           <label id="debug-mode-toggle"><input type="checkbox" id="debug-mode-checkbox" tabindex="-1"> Debug</label>
         </div>
+              <div id="ui-build-marker">UI BUILD 2026.09.22-1</div>
       </section>
 
       <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
@@ -442,16 +460,16 @@
 
   <script src="build/re3_wasm.js"></script>
   <script src="asset-source.js?v=2"></script>
-  <script src="opfs-cache.js?v=3"></script>
+  <script src="opfs-cache.js?v=20260922-1"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
-  <script src="vfs.js?v=16"></script>
-  <script src="saves.js?v=12"></script>
-  <script src="save-manager.js?v=2"></script>
-  <script src="mod-manager.js?v=1"></script>
-  <script src="input.js?v=10"></script>
-  <script src="perf.js?v=10"></script>
-  <script src="boot.js?v=10"></script>
-  <script src="launcher.js?v=21"></script>
+  <script src="vfs.js?v=20260922-1"></script>
+  <script src="saves.js?v=20260922-1"></script>
+  <script src="save-manager.js?v=20260922-1"></script>
+  <script src="mod-manager.js?v=20260922-1"></script>
+  <script src="input.js?v=20260922-1"></script>
+  <script src="perf.js?v=20260922-1"></script>
+  <script src="boot.js?v=20260922-1"></script>
+  <script src="launcher.js?v=20260922-1"></script>
   <script>
     (() => {
       const playBtn = document.getElementById("play-game-btn");
@@ -528,9 +546,15 @@
         gameWindow.classList.remove("hidden");
         document.body.classList.add("game-window-open");
         loadingOverlay.classList.remove("hidden");
-        loadingTitle.textContent = "LOADING GTA III";
-        loadingStatus.textContent = "Preparing game files…";
-        loadingDetail.textContent = "Checking local cache and preparing Liberty City.";
+        loadingTitle.textContent = "LOADING...";
+        loadingStatus.textContent = "Preparing GTA III…";
+        loadingDetail.textContent = "Checking the local game cache and browser storage.";
+        const transfer = document.getElementById("loading-transfer");
+        const eta = document.getElementById("loading-eta");
+        const resume = document.getElementById("loading-resume-note");
+        if (transfer) transfer.textContent = "Checking cached game data…";
+        if (eta) eta.textContent = "Calculating next step…";
+        if (resume) { resume.textContent = ""; resume.classList.add("hidden"); }
         phase.textContent = "LOADING";
         startTimer();
 
@@ -608,6 +632,19 @@
       });
 
       closeBtn.addEventListener("click", closeGameWindow);
+
+      // manager-fallback-v1: keep homepage controls responsive even if a cached
+      // script fails; the real manager scripts replace these with full behavior.
+      const saveHome = document.getElementById("home-save-manager-btn");
+      const modHome = document.getElementById("mod-manager-btn");
+      saveHome?.addEventListener("click", () => {
+        const modal = document.getElementById("save-manager-overlay");
+        if (modal) modal.classList.remove("hidden");
+      });
+      modHome?.addEventListener("click", () => {
+        const modal = document.getElementById("mod-manager-overlay");
+        if (modal) modal.classList.remove("hidden");
+      });
 
       document.addEventListener("fullscreenchange", () => {
         if (!document.fullscreenElement && !gameWindow.classList.contains("hidden")) {
