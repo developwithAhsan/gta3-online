@@ -756,3 +756,15 @@ body.game-window-open{overflow:hidden}
   0%,100%{box-shadow:0 0 0 rgba(116,174,226,0)}
   50%{box-shadow:0 0 15px rgba(116,174,226,.28)}
 }
+
+
+/* GTA III owns the in-game cursor. Hide the operating-system/browser pointer
+   over the WebGL surface, including menu screens where re3 draws its own cursor. */
+.game-window #canvas,
+#viewport:fullscreen #canvas,
+#canvas:fullscreen {
+  cursor: none !important;
+}
+.game-window #pointerlock-hint {
+  cursor: none;
+}

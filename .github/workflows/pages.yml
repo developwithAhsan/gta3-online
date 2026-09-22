@@ -45,6 +45,13 @@ jobs:
             exit 1
           fi
 
+      - name: Verify fullscreen input behavior
+        run: |
+          grep -q 'DOUBLE_ESCAPE_MS = 750' web/index.html
+          grep -q 'event.code !== "Escape"' web/index.html
+          grep -q 'double Esc exits game' web/input.js
+          grep -q 'cursor: none !important' web/styles.css
+
       - name: Verify browser bundle
         run: |
           node --check web/vfs.js

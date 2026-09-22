@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-audio1">
+  <link rel="stylesheet" href="styles.css?v=20260922-esc1">
 
   <script type="application/ld+json">
   {
@@ -146,7 +146,7 @@
           <div class="game-window-actions">
             <button id="save-manager-btn" type="button">Save Manager</button>
             <button id="audio-unlock-btn" class="audio-unlock-btn hidden" type="button">ENABLE SOUND</button>
-            <button id="game-fullscreen-btn" type="button">Fullscreen</button>
+            <button id="game-fullscreen-btn" type="button" title="Optional browser-native fullscreen. Double Esc returns to the website.">Fullscreen</button>
             <button id="game-window-close" type="button">Close</button>
           </div>
         </div>
@@ -541,7 +541,7 @@
   <script src="save-manager.js?v=20260922-3"></script>
   <script src="mod-manager.js?v=20260922-3"></script>
   <script src="zip-workspace.js?v=20260922-3"></script>
-  <script src="input.js?v=20260922-1"></script>
+  <script src="input.js?v=20260922-esc1"></script>
   <script src="perf.js?v=20260922-1"></script>
   <script src="boot.js?v=20260922-1"></script>
   <script src="launcher.js?v=20260922-audio1"></script>
@@ -569,6 +569,10 @@
       let timerId = 0;
       let launchStarted = false;
       let fpsSetter = null;
+      let lastEscapeAt = 0;
+      let escapeResetTimer = 0;
+      let nativeFullscreenWasActive = !!document.fullscreenElement;
+      const DOUBLE_ESCAPE_MS = 750;
 
       const touchStates = ["auto", "on", "off"];
       const touchLabels = { auto: "AUTO", on: "ON", off: "OFF" };
@@ -634,13 +638,12 @@
         phase.textContent = "LOADING";
         startTimer();
 
-        try {
-          if (!document.fullscreenElement && gameWindow.requestFullscreen) {
-            await gameWindow.requestFullscreen();
-          }
-        } catch {
-          // CSS full-screen window remains active if browser fullscreen is denied.
-        }
+        // The dedicated game window already fills the browser viewport. Do not
+        // automatically enter the browser Fullscreen API here: browsers reserve
+        // Escape for leaving native fullscreen, which would prevent GTA III from
+        // receiving the first Esc. Keeping normal play in the full-viewport window
+        // lets first Esc stay with the game and second Esc exit the game window.
+        // The toolbar Fullscreen button remains available for optional native mode.
       }
 
       function closeGameWindow() {
@@ -648,10 +651,40 @@
         gameWindow.classList.add("hidden");
         document.body.classList.remove("game-window-open");
         playBtn.disabled = false;
+        lastEscapeAt = 0;
+        clearTimeout(escapeResetTimer);
         if (document.fullscreenElement) {
           document.exitFullscreen().catch(() => {});
         }
       }
+
+      function armEscapeExit(now = performance.now()) {
+        lastEscapeAt = now;
+        clearTimeout(escapeResetTimer);
+        escapeResetTimer = window.setTimeout(() => {
+          lastEscapeAt = 0;
+        }, DOUBLE_ESCAPE_MS);
+      }
+
+      // First Esc is deliberately allowed to continue to GTA III (menu/back).
+      // A second Esc within 750 ms exits the dedicated game window.
+      window.addEventListener("keydown", (event) => {
+        if (event.code !== "Escape" || event.repeat || gameWindow.classList.contains("hidden")) return;
+
+        const now = performance.now();
+        if (lastEscapeAt && now - lastEscapeAt <= DOUBLE_ESCAPE_MS) {
+          lastEscapeAt = 0;
+          clearTimeout(escapeResetTimer);
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          closeGameWindow();
+          return;
+        }
+
+        armEscapeExit(now);
+        // Do not preventDefault/stopPropagation here. The first Esc belongs to
+        // GTA III, so its own frontend/menu handling remains intact.
+      }, { capture: true });
 
       window.addEventListener("gta3-audio-unlock-needed", () => {
         audioUnlockBtn?.classList.remove("hidden");
@@ -735,8 +768,20 @@
       });
 
       document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement && !gameWindow.classList.contains("hidden")) {
-          // Keep the dedicated CSS game window open even after Esc exits native fullscreen.
+        const nativeNow = !!document.fullscreenElement;
+
+        if (nativeFullscreenWasActive && !nativeNow && !gameWindow.classList.contains("hidden")) {
+          // Chrome/Firefox may consume the Esc key that leaves browser-native
+          // fullscreen before JavaScript receives keydown. Treat that browser
+          // fullscreen exit as the first Esc so the next Esc closes the game window.
+          armEscapeExit();
+        }
+
+        nativeFullscreenWasActive = nativeNow;
+
+        if (!nativeNow && !gameWindow.classList.contains("hidden")) {
+          // Keep the dedicated full-viewport game window open after native
+          // fullscreen ends. A second Esc then returns to the normal website.
           document.body.classList.add("game-window-open");
         }
       });

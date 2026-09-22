@@ -93,8 +93,8 @@
 		function updateHint() {
 			const locked = document.pointerLockElement === canvas;
 			hintEl.textContent = locked
-				? "Mouse look active — click or Esc to release"
-				: "Click to enable mouse look — Esc to release";
+				? "Mouse look active — Esc releases mouse; double Esc exits game"
+				: "Click to enable mouse look — double Esc exits game";
 			hintEl.classList.toggle("locked", locked);
 		}
 
