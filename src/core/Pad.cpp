@@ -1151,6 +1151,29 @@ void CPad::AddToPCCheatString(char c)
 	#undef _CHEATCMP
 }
 
+#ifdef __EMSCRIPTEN__
+// Browser toolbar cheat bridge. Feed the selected code through GTA III's own
+// PC cheat parser so clicking a menu item behaves like typing the cheat in-game.
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserApplyCheat(const char *code)
+{
+	if (code == nil || *code == '\0')
+		return 0;
+
+	int count = 0;
+	for (const char *p = code; *p != '\0'; ++p) {
+		char ch = *p;
+		if (ch >= 'a' && ch <= 'z')
+			ch = (char)(ch - 'a' + 'A');
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) {
+			CPad::GetPad(0)->AddToPCCheatString(ch);
+			++count;
+		}
+	}
+	return count;
+}
+#endif
+
 #ifdef XINPUT
 int CPad::XInputJoy1 = 0;
 int CPad::XInputJoy2 = 1;
