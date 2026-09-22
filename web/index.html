@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-touch3">
+  <link rel="stylesheet" href="styles.css?v=20260922-toolbar1">
 
   <script type="application/ld+json">
   {
@@ -145,7 +145,7 @@
           <button id="input-debug-btn" type="button" tabindex="-1">Input</button>
           <label id="debug-mode-toggle"><input type="checkbox" id="debug-mode-checkbox" tabindex="-1"> Debug</label>
         </div>
-              <div id="ui-build-marker">UI BUILD 2026.09.22-7</div>
+              <div id="ui-build-marker">UI BUILD 2026.09.22-8</div>
       </section>
 
       <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
@@ -155,13 +155,48 @@
             <span id="game-window-phase">LOADING</span>
             <span class="game-window-time">TIME <b id="loading-timer">00:00</b></span>
           </div>
+
+          <div class="game-window-center-actions" aria-label="Game shortcuts">
+            <button id="game-cheats-btn" class="game-toolbar-btn" type="button">Cheats</button>
+            <button id="game-more-games-btn" class="game-toolbar-btn" type="button">More Games</button>
+          </div>
+
           <div class="game-window-actions">
+            <button id="game-sensitivity-btn" class="game-toolbar-btn" type="button">Sensitivity</button>
             <button id="save-manager-btn" type="button">Save Manager</button>
             <button id="audio-unlock-btn" class="audio-unlock-btn hidden" type="button">ENABLE SOUND</button>
             <button id="game-fullscreen-btn" type="button" title="Optional browser-native fullscreen. Double Esc returns to the website.">Fullscreen</button>
             <button id="game-window-close" type="button">Close</button>
           </div>
         </div>
+
+        <div id="game-cheats-panel" class="game-toolbar-panel game-cheats-panel hidden" aria-label="GTA 3 cheats">
+          <div class="game-toolbar-panel-head">
+            <div>
+              <strong>GTA 3 CHEATS</strong>
+              <small>Click any cheat to apply it instantly in the running game.</small>
+            </div>
+            <button id="game-cheats-close" class="game-toolbar-panel-close" type="button" aria-label="Close cheats">×</button>
+          </div>
+          <div id="game-cheats-list" class="game-cheats-list"></div>
+          <div id="game-cheat-status" class="game-cheat-status" aria-live="polite">Select a cheat to apply it.</div>
+        </div>
+
+        <div id="game-sensitivity-panel" class="game-toolbar-panel game-sensitivity-panel hidden" aria-label="Touch sensitivity">
+          <div class="game-toolbar-panel-head">
+            <div>
+              <strong>TOUCH SENSITIVITY</strong>
+              <small>Adjust joystick response while the game is open.</small>
+            </div>
+            <button id="game-sensitivity-close" class="game-toolbar-panel-close" type="button" aria-label="Close sensitivity">×</button>
+          </div>
+          <div class="game-toolbar-sensitivity-control">
+            <input id="game-sensitivity-range" type="range" min="50" max="200" step="10" value="100" aria-label="In-game touch sensitivity">
+            <output id="game-sensitivity-output" for="game-sensitivity-range">100%</output>
+          </div>
+        </div>
+
+        <div id="game-more-games-panel" class="game-toolbar-panel game-more-games-panel hidden" aria-label="More games"></div>
         <div class="game-stage-card">
         <section id="viewport" aria-label="GTA III game viewport">
           <div id="error-banner">
@@ -586,6 +621,7 @@
   <script src="boot.js?v=20260922-1"></script>
   <script src="launcher.js?v=20260922-audio1"></script>
   <script src="touch-controls.js?v=20260922-touch5"></script>
+  <script src="game-toolbar.js?v=20260922-toolbar1"></script>
   <script>
     (() => {
       const playBtn = document.getElementById("play-game-btn");
