@@ -52,6 +52,14 @@ jobs:
           grep -q 'double Esc exits game' web/input.js
           grep -q 'cursor: none !important' web/styles.css
 
+      - name: Verify homepage community and slideshow
+        run: |
+          test -s web/images/gta3-about-slideshow.webp
+          grep -q 'id="discussion"' web/index.html
+          grep -q "data-webynize-id='13086'" web/index.html
+          grep -q "widgets.webynize.com/comments.js" web/index.html
+          grep -q 'gta3-about-slideshow.webp' web/styles.css
+
       - name: Verify browser bundle
         run: |
           node --check web/vfs.js

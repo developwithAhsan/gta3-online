@@ -768,3 +768,70 @@ body.game-window-open{overflow:hidden}
 .game-window #pointerlock-hint {
   cursor: none;
 }
+
+
+/* GTA III screenshot slideshow behind About section */
+.gta-about-slideshow{
+  position:relative;
+  isolation:isolate;
+  min-height:430px;
+  overflow:hidden;
+  background:#111925;
+}
+.gta-about-slideshow::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  background-image:url("images/gta3-about-slideshow.webp");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  transform:scale(1.025);
+  filter:saturate(.92) contrast(1.05);
+}
+.gta-about-slideshow::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:
+    linear-gradient(90deg,rgba(10,16,24,.94) 0%,rgba(10,16,24,.88) 50%,rgba(10,16,24,.72) 100%),
+    linear-gradient(180deg,rgba(10,16,24,.38),rgba(10,16,24,.82));
+}
+.gta-about-slideshow .vc-section-title{
+  text-shadow:0 2px 14px rgba(0,0,0,.85);
+}
+.gta-about-slideshow p,
+.gta-about-slideshow li{
+  color:#d0dae4;
+  text-shadow:0 1px 6px rgba(0,0,0,.9);
+}
+.gta-about-slideshow strong{color:#fff}
+
+/* Discussion / Webynize comments */
+.discussion-section{
+  margin-top:16px;
+  position:relative;
+  overflow:visible;
+}
+.discussion-intro{
+  margin:0 0 14px;
+  max-width:760px;
+}
+.discussion-widget-shell{
+  min-height:180px;
+  padding:14px;
+  border:1px solid var(--border);
+  background:#111925;
+}
+.wbnz-comments{
+  min-height:140px;
+}
+@media(max-width:760px){
+  .gta-about-slideshow{min-height:520px}
+  .gta-about-slideshow::after{
+    background:linear-gradient(180deg,rgba(10,16,24,.82),rgba(10,16,24,.94));
+  }
+  .discussion-widget-shell{padding:10px}
+}
