@@ -63,6 +63,9 @@ jobs:
           grep -q 'id="disqus_thread"' web/index.html
           grep -q "gta3-1.disqus.com/embed.js" web/index.html
           grep -q "gta3-online-homepage" web/index.html
+          grep -q 'touch-controls.js' web/index.html
+          grep -q 'gta3-touch-hud' web/touch-controls.js
+          grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
           ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
           grep -q '@keyframes aboutScreenshotFade' web/styles.css
@@ -81,6 +84,7 @@ jobs:
           node --check web/mod-manager.js
           node --check web/zip-workspace.js
           node --check web/input.js
+          node --check web/touch-controls.js
           node --check web/perf.js
           node --check web/boot.js
           node --check web/launcher.js
