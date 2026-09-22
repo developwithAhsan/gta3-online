@@ -19,6 +19,7 @@
 #include "Timer.h"
 #include "Frontend.h"
 #include "Camera.h"
+#include "Clock.h"
 #include "Game.h"
 #include "CutsceneMgr.h"
 #include "Font.h"
@@ -29,6 +30,7 @@
 #include "World.h"
 #include "Vehicle.h"
 #include "Ped.h"
+#include "PlayerPed.h"
 #include "Population.h"
 #include "Record.h"
 #include "Replay.h"
@@ -72,6 +74,111 @@ char CPad::KeyBoardCheatString[20];
 CMouseControllerState CPad::OldMouseControllerState;
 CMouseControllerState CPad::NewMouseControllerState;
 CMouseControllerState CPad::PCTempMouseControllerState;
+
+#ifdef __EMSCRIPTEN__
+// Persistent browser touch state. Unlike PCTempJoyState, this is intentionally
+// not cleared every frame: pointer events update it on press/move/release and
+// CPad::Update() merges the current state into the normal keyboard/mouse path.
+static CControllerState g_re3BrowserTouchState;
+
+enum eRe3BrowserTouchControl {
+	RE3_TOUCH_LEFT_X = 0,
+	RE3_TOUCH_LEFT_Y,
+	RE3_TOUCH_CROSS,
+	RE3_TOUCH_SQUARE,
+	RE3_TOUCH_TRIANGLE,
+	RE3_TOUCH_CIRCLE,
+	RE3_TOUCH_R1,
+	RE3_TOUCH_L1,
+	RE3_TOUCH_LSHOCK,
+	RE3_TOUCH_SELECT,
+	RE3_TOUCH_START,
+	RE3_TOUCH_R2,
+	RE3_TOUCH_L2,
+};
+
+static int16
+re3TouchButtonValue(int value)
+{
+	return value ? 255 : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void
+re3_BrowserTouchSet(int control, int value)
+{
+	value = Clamp(value, -127, 127);
+	switch (control) {
+	case RE3_TOUCH_LEFT_X: g_re3BrowserTouchState.LeftStickX = (int16)value; break;
+	case RE3_TOUCH_LEFT_Y: g_re3BrowserTouchState.LeftStickY = (int16)value; break;
+	case RE3_TOUCH_CROSS: g_re3BrowserTouchState.Cross = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_SQUARE: g_re3BrowserTouchState.Square = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_TRIANGLE: g_re3BrowserTouchState.Triangle = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_CIRCLE: g_re3BrowserTouchState.Circle = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_R1: g_re3BrowserTouchState.RightShoulder1 = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_L1: g_re3BrowserTouchState.LeftShoulder1 = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_LSHOCK: g_re3BrowserTouchState.LeftShock = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_SELECT: g_re3BrowserTouchState.Select = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_START: g_re3BrowserTouchState.Start = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_R2: g_re3BrowserTouchState.RightShoulder2 = re3TouchButtonValue(value); break;
+	case RE3_TOUCH_L2: g_re3BrowserTouchState.LeftShoulder2 = re3TouchButtonValue(value); break;
+	default: break;
+	}
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void
+re3_BrowserTouchReset(void)
+{
+	g_re3BrowserTouchState.Clear();
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetContext(void)
+{
+	CPlayerPed *ped = FindPlayerPed();
+	if (ped == nil)
+		return 0;
+	if (ped->InVehicle())
+		return 2;
+
+	CEntity *near = CWorld::TestSphereAgainstWorld(
+		ped->GetPosition(), 4.0f, ped,
+		false, true, false, false, false, false);
+	return near && near->IsVehicle() ? 1 : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetWeaponType(void)
+{
+	CPlayerPed *ped = FindPlayerPed();
+	return ped ? (int)ped->m_nSelectedWepSlot : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetHealth(void)
+{
+	CPlayerPed *ped = FindPlayerPed();
+	return ped ? (int)Max(0.0f, ped->m_fHealth) : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetWanted(void)
+{
+	CPlayerPed *ped = FindPlayerPed();
+	return ped && ped->m_pWanted ? ped->m_pWanted->GetWantedLevel() : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetCash(void)
+{
+	return CWorld::Players[CWorld::PlayerInFocus].m_nMoney;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserTouchGetClock(void)
+{
+	return (int)CClock::GetHours() * 100 + (int)CClock::GetMinutes();
+}
+#endif
 
 #ifdef DETECT_PAD_INPUT_SWITCH
 bool CPad::IsAffectedByController = false;
@@ -1450,6 +1557,10 @@ void CPad::Update(int16 pad)
 	{
 		NewState = ReconcileTwoControllersInput(PCTempKeyState, PCTempJoyState);
 		NewState = ReconcileTwoControllersInput(PCTempMouseState, NewState);
+#ifdef __EMSCRIPTEN__
+		if (pad == 0)
+			NewState = ReconcileTwoControllersInput(g_re3BrowserTouchState, NewState);
+#endif
 	}
 
 	PCTempJoyState.Clear();
