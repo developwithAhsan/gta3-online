@@ -7,6 +7,9 @@
     opacity: 0.66,
     transitionMs: 200,
     pollMs: 140,
+    deadZone: 0.12,
+    knobTravel: 0.40,
+    haptics: true,
 
     // Sized against a typical 800-900 x 430-500 landscape phone:
     // joystick ~110-125px, action buttons ~58-65px,
@@ -88,14 +91,16 @@
       return 100;
     }
   })();
-  const sensitivityCurve = value => {
-    const sign = Math.sign(value);
-    const magnitude = Math.min(1, Math.abs(value));
+  const sensitivityMagnitude = magnitude => {
     const ratio = touchSensitivity / 100;
     const exponent = ratio >= 1
       ? 1 / (1 + (ratio - 1) * 0.9)
       : 1 + (1 - ratio) * 1.4;
-    return sign * Math.pow(magnitude, exponent);
+    return Math.pow(Math.max(0, Math.min(1, magnitude)), exponent);
+  };
+  const pulseHaptic = () => {
+    if (!TOUCH_CONFIG.haptics || typeof navigator.vibrate !== "function") return;
+    try { navigator.vibrate(8); } catch {}
   };
   const isDesktopHUD = () =>
     matchMedia("(hover:hover) and (pointer:fine)").matches ||
@@ -166,15 +171,18 @@
   }
 
   class TouchButton {
-    constructor({ parent, className = "", icon = "", label = "", onPress, onRelease }) {
+    constructor({ parent, className = "", icon = "", label = "", shortLabel = "", onPress, onRelease }) {
       this.onPress = onPress || (() => {});
       this.onRelease = onRelease || (() => {});
       this.pointers = new Set();
+      this.box = null;
+      this.desktopPx = null;
       this.el = document.createElement("button");
       this.el.type = "button";
       this.el.className = `touch-control-btn ${className}`;
       this.el.innerHTML = icon;
       this.el.setAttribute("aria-label", label);
+      if (shortLabel) this.el.dataset.shortLabel = shortLabel;
       parent.appendChild(this.el);
       this.bind();
     }
@@ -187,7 +195,10 @@
         this.el.setPointerCapture?.(e.pointerId);
         this.pointers.add(e.pointerId);
         this.el.classList.add("is-pressed");
-        if (this.pointers.size === 1) this.onPress(e);
+        if (this.pointers.size === 1) {
+          pulseHaptic();
+          this.onPress(e);
+        }
       });
       const release = e => {
         if (!this.pointers.has(e.pointerId)) return;
@@ -210,16 +221,32 @@
       if (label) this.el.setAttribute("aria-label", label);
     }
 
-    setBox({ size, left, right, top, bottom }, desktopPx = null) {
+    setBox(box, desktopPx = null) {
+      this.box = box;
+      this.desktopPx = desktopPx;
+      this.refreshBox();
+    }
+
+    refreshBox() {
+      if (!this.box) return;
+      const { size, left, right, top, bottom } = this.box;
       if (size != null) {
-        const value = controlSize(size, desktopPx);
+        const value = controlSize(size, this.desktopPx);
         this.el.style.width = value;
         this.el.style.height = value;
       }
-      if (left != null) this.el.style.left = vmin(left);
-      if (right != null) this.el.style.right = vmin(right);
-      if (top != null) this.el.style.top = vmin(top);
-      if (bottom != null) this.el.style.bottom = vmin(bottom);
+      this.el.style.left = left != null ? vmin(left) : "";
+      this.el.style.right = right != null ? vmin(right) : "";
+      this.el.style.top = top != null ? vmin(top) : "";
+      this.el.style.bottom = bottom != null ? vmin(bottom) : "";
+    }
+
+    forceRelease() {
+      if (this.pointers.size > 0) {
+        this.pointers.clear();
+        this.el.classList.remove("is-pressed");
+        this.onRelease({ forced: true });
+      }
     }
   }
 
@@ -233,11 +260,7 @@
       this.knob.className = "touch-joystick-knob";
       this.base.appendChild(this.knob);
       parent.appendChild(this.base);
-      const cfg = TOUCH_CONFIG.joystick;
-      this.base.style.width = this.base.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.joystick);
-      this.base.style.left = vmin(cfg.left);
-      this.base.style.bottom = vmin(cfg.bottom);
-      this.knob.style.width = this.knob.style.height = controlSize(cfg.knob, TOUCH_CONFIG.desktopPx.joystickKnob);
+      this.refreshLayout();
       this.bind();
     }
 
@@ -274,23 +297,46 @@
       const cy = r.top + r.height / 2;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
-      const max = r.width * 0.37;
-      const len = Math.hypot(dx, dy) || 1;
-      const scale = Math.min(1, max / len);
-      const px = dx * scale;
-      const py = dy * scale;
-      const nx = Math.max(-1, Math.min(1, px / max));
-      const ny = Math.max(-1, Math.min(1, py / max));
-      const sx = sensitivityCurve(nx);
-      const sy = sensitivityCurve(ny);
+      const max = r.width * TOUCH_CONFIG.knobTravel;
+      const rawLen = Math.hypot(dx, dy);
+      const len = rawLen || 1;
+      const visualScale = Math.min(1, max / len);
+      const px = dx * visualScale;
+      const py = dy * visualScale;
+
+      const rawMagnitude = Math.min(1, rawLen / max);
+      const deadZone = TOUCH_CONFIG.deadZone;
+      let outputMagnitude = 0;
+      if (rawMagnitude > deadZone) {
+        const normalized = (rawMagnitude - deadZone) / (1 - deadZone);
+        outputMagnitude = sensitivityMagnitude(normalized);
+      }
+
+      const dirX = rawLen > 0 ? dx / rawLen : 0;
+      const dirY = rawLen > 0 ? dy / rawLen : 0;
+      const sx = dirX * outputMagnitude;
+      const sy = dirY * outputMagnitude;
+
+      this.base.classList.toggle("is-active", rawMagnitude > deadZone);
       this.knob.style.transform = `translate(calc(-50% + ${px}px),calc(-50% + ${py}px))`;
       this.bridge.set(CONTROL.LEFT_X, Math.round(sx * 127));
       this.bridge.set(CONTROL.LEFT_Y, Math.round(sy * 127));
     }
 
+    refreshLayout() {
+      const cfg = TOUCH_CONFIG.joystick;
+      this.base.style.width = this.base.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.joystick);
+      this.base.style.left = vmin(cfg.left);
+      this.base.style.bottom = vmin(cfg.bottom);
+      this.knob.style.width = this.knob.style.height = controlSize(cfg.knob, TOUCH_CONFIG.desktopPx.joystickKnob);
+    }
+
     reset() {
       this.pointerId = null;
+      this.base.classList.remove("is-active");
       this.knob.style.transform = "translate(-50%,-50%)";
+      this.bridge.set(CONTROL.LEFT_X, 0);
+      this.bridge.set(CONTROL.LEFT_Y, 0);
     }
   }
 
@@ -304,9 +350,6 @@
       parent.appendChild(this.wrap);
 
       const cfg = TOUCH_CONFIG.steering;
-      this.wrap.style.left = vmin(cfg.left);
-      this.wrap.style.bottom = vmin(cfg.bottom);
-      this.wrap.style.gap = vmin(cfg.gap);
 
       this.left = new TouchButton({
         parent: this.wrap,
@@ -326,6 +369,16 @@
       });
       for (const b of [this.left, this.right]) {
         b.el.style.position = "relative";
+      }
+      this.refreshLayout();
+    }
+
+    refreshLayout() {
+      const cfg = TOUCH_CONFIG.steering;
+      this.wrap.style.left = vmin(cfg.left);
+      this.wrap.style.bottom = vmin(cfg.bottom);
+      this.wrap.style.gap = vmin(cfg.gap);
+      for (const b of [this.left, this.right]) {
         b.el.style.width = b.el.style.height = controlSize(cfg.size, TOUCH_CONFIG.desktopPx.steering);
       }
     }
@@ -392,23 +445,24 @@
       this.joystick = new Joystick(root, this.bridge);
       this.steering = new SteeringPair(root, this.bridge);
 
-      this.sprint = this.makeHold("on-foot-control sprint-btn", ICONS.run, "Sprint", CONTROL.CROSS, TOUCH_CONFIG.sprint);
+      this.sprint = this.makeHold("on-foot-control sprint-btn", ICONS.run, "Sprint", CONTROL.CROSS, TOUCH_CONFIG.sprint, "RUN");
       this.action = new TouchButton({
         parent: root,
         className: "touch-action-btn",
         icon: ICONS.jump,
         label: "Jump or context action",
+        shortLabel: "ACTION",
         onPress: () => this.pressAction(true),
         onRelease: () => this.pressAction(false),
       });
       this.action.setBox(TOUCH_CONFIG.action, TOUCH_CONFIG.desktopPx.action);
 
-      this.accelerate = this.makeHold("vehicle-control accelerate-btn", ICONS.gas, "Accelerate", CONTROL.CROSS, TOUCH_CONFIG.accelerate);
-      this.brake = this.makeHold("vehicle-control brake-btn", ICONS.brake, "Brake or reverse", CONTROL.SQUARE, TOUCH_CONFIG.brake);
-      this.handbrake = this.makeHold("vehicle-control handbrake-btn", ICONS.handbrake, "Handbrake", CONTROL.R1, TOUCH_CONFIG.handbrake);
-      this.horn = this.makeHold("vehicle-control horn-btn", ICONS.horn, "Horn", CONTROL.LSHOCK, TOUCH_CONFIG.horn);
+      this.accelerate = this.makeHold("vehicle-control accelerate-btn", ICONS.gas, "Accelerate", CONTROL.CROSS, TOUCH_CONFIG.accelerate, "GAS");
+      this.brake = this.makeHold("vehicle-control brake-btn", ICONS.brake, "Brake or reverse", CONTROL.SQUARE, TOUCH_CONFIG.brake, "BRAKE");
+      this.handbrake = this.makeHold("vehicle-control handbrake-btn", ICONS.handbrake, "Handbrake", CONTROL.R1, TOUCH_CONFIG.handbrake, "HB");
+      this.horn = this.makeHold("vehicle-control horn-btn", ICONS.horn, "Horn", CONTROL.LSHOCK, TOUCH_CONFIG.horn, "HORN");
 
-      this.fire = this.makeHold("touch-fire-btn", ICONS.fist, "Attack or fire", CONTROL.CIRCLE, TOUCH_CONFIG.fire);
+      this.fire = this.makeHold("touch-fire-btn", ICONS.fist, "Attack or fire", CONTROL.CIRCLE, TOUCH_CONFIG.fire, "FIRE");
 
       this.utility = document.createElement("div");
       this.utility.className = "touch-utility";
@@ -425,12 +479,13 @@
       }
     }
 
-    makeHold(className, icon, label, control, box) {
+    makeHold(className, icon, label, control, box, shortLabel = "") {
       const b = new TouchButton({
         parent: this.root,
         className,
         icon,
         label,
+        shortLabel,
         onPress: () => this.bridge.set(control, 1),
         onRelease: () => this.bridge.set(control, 0),
       });
@@ -470,7 +525,13 @@
       window.addEventListener("gta3-touch-sensitivity-change", e => {
         touchSensitivity = clampSensitivity(e.detail?.value);
       });
-      window.addEventListener("resize", () => this.refreshVisibility());
+      window.addEventListener("resize", () => {
+        this.refreshVisibility();
+        this.refreshLayout();
+      });
+      window.addEventListener("orientationchange", () => {
+        window.setTimeout(() => this.refreshLayout(), 120);
+      });
       window.addEventListener("blur", () => this.resetAll());
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) this.resetAll();
@@ -479,6 +540,32 @@
 
     isTouchEnvironment() {
       return navigator.maxTouchPoints > 0 || matchMedia("(pointer:coarse)").matches;
+    }
+
+    refreshLayout() {
+      this.joystick?.refreshLayout();
+      this.steering?.refreshLayout();
+
+      const radarSize = controlSize(TOUCH_CONFIG.radar.size, TOUCH_CONFIG.desktopPx.radar);
+      if (this.radar) {
+        this.radar.style.width = radarSize;
+        this.radar.style.height = radarSize;
+      }
+
+      for (const button of [
+        this.sprint, this.action, this.accelerate, this.brake,
+        this.handbrake, this.horn, this.fire, this.weaponCycle, this.pause
+      ]) {
+        button?.refreshBox?.();
+      }
+
+      for (const button of [this.weaponCycle, this.pause]) {
+        if (button?.el) {
+          const size = controlSize(TOUCH_CONFIG.utility.size, TOUCH_CONFIG.desktopPx.utility);
+          button.el.style.width = size;
+          button.el.style.height = size;
+        }
+      }
     }
 
     refreshVisibility() {
@@ -537,6 +624,12 @@
       this.bridge.reset();
       this.joystick?.reset();
       this.steering?.reset();
+      for (const button of [
+        this.sprint, this.action, this.accelerate, this.brake,
+        this.handbrake, this.horn, this.fire, this.weaponCycle, this.pause
+      ]) {
+        button?.forceRelease?.();
+      }
       this.root?.querySelectorAll(".is-pressed").forEach(el => el.classList.remove("is-pressed"));
     }
   }
