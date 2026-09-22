@@ -63,23 +63,40 @@
   });
 
   const ICONS = {
-    run: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="28" cy="9" r="4"/><path d="M23 17l7 5 7 1m-14-6-6 8-7 2m17-5-5 9-9 8m9-8 8 8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    jump: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="25" cy="9" r="4"/><path d="M23 17l-6 8 8 4 5-8 7 5m-12 3-7 11m7-11 10 9M11 15l6-4 4 5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    car: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 29l4-11h20l4 11v9h-5v-4H15v4h-5v-9Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M15 18l3-6h12l4 6M14 28h5m10 0h5" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>`,
-    exit: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M27 8H12v32h15M20 24h19m0 0-7-7m7 7-7 7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    fist: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 24v-8a4 4 0 0 1 8 0v6-10a4 4 0 0 1 8 0v10-7a4 4 0 0 1 8 0v13c0 9-6 14-14 14-7 0-14-5-16-12l-2-7a4 4 0 0 1 7-3l4 6" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    gun: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 19h23l9 5-4 6H24l-3 11h-8l4-12H7V19Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M30 19v-5h8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>`,
-    gas: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 39V10m0 0-10 10m10-10 10 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    brake: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 9v29m0 0-10-10m10 10 10-10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    handbrake: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="15" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M15 35V13m18 22V13M18 24h12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>`,
-    horn: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 28h8l12 8V12l-12 8H8v8Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M34 18c3 3 3 9 0 12m5-16c6 6 6 14 0 20" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>`,
-    grid: `<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor"><rect x="9" y="9" width="8" height="8" rx="1"/><rect x="20" y="9" width="8" height="8" rx="1"/><rect x="31" y="9" width="8" height="8" rx="1"/><rect x="9" y="20" width="8" height="8" rx="1"/><rect x="20" y="20" width="8" height="8" rx="1"/><rect x="31" y="20" width="8" height="8" rx="1"/><rect x="9" y="31" width="8" height="8" rx="1"/><rect x="20" y="31" width="8" height="8" rx="1"/><rect x="31" y="31" width="8" height="8" rx="1"/></g></svg>`,
-    map: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 40V19l16-11 16 11v21H8Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M18 40V28h12v12M14 22h4m12 0h4" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>`,
-    left: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M31 9 16 24l15 15" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    right: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m17 9 15 15-15 15" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    run: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="14.6" cy="4.3" r="2" fill="currentColor" stroke="none"/><path d="m11.4 8.1 3.5 2.1 3.2.5M11.4 8.1 8.7 12l-3.5 1.1m8.3-2.8-2.1 4.1-4 4.3m4-4.3 4.6 4.1" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    jump: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5 8 4.5l3 3M8 4.8v5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.7" cy="5.3" r="1.8" fill="currentColor" stroke="none"/><path d="m13.3 9 2.7 2.2 3.4-.4m-6.1-1.8-2.7 3.6 3.1 2.2 2.1-3m-2.1 3-3 4.1m3-4.1 4.1 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    car: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5.4 10.2 1.7-4h9.8l1.7 4 1.5 1.4v5.7h-2.2v-1.8H6.1v1.8H3.9v-5.7l1.5-1.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.2 10.2h11.6M6.7 13.1h2.2m6.2 0h2.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+    exit: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 16.2V9.7l1.4-3.5h8.3l1.1 2.6M6.5 12.2h5.7M6.3 15h2.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15.4h7m0 0-2.5-2.5m2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    fist: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.1 11V7.6a1.7 1.7 0 0 1 3.4 0v2.2-4a1.7 1.7 0 0 1 3.4 0v4.1-2.8a1.7 1.7 0 0 1 3.4 0v5.1c0 4.5-2.7 7.3-6.5 7.3-3.4 0-6.1-2.4-7-5.5l-.7-2.4A1.7 1.7 0 0 1 6.2 10l2 3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    gun: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 9.3h10.5l4.7 2.5-1.9 2.5h-5.1L10 19H6.7l1.6-4.7H3.2V9.3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 9.3V7.2h3.8M5 11.6h4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+    gas: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.1h5.4l2.4 13.8H6.9L9.3 5.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10.2 9h3.6m-4.2 3h4.8m-5.3 3h5.8M12 3v3m0-3-2 2m2-2 2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    brake: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.1h5.4l2.4 13.8H6.9L9.3 5.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.4 10h5.2m-4.7 3h4.2m-3.7 3h3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+    handbrake: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17.5h9.1l3.7-8.3h1.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.6 17.5 2.9 2M4 15.2v4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+    horn: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13h4l6 4V7l-6 4h-4v2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16.4 9.1c1.8 1.5 1.8 4.3 0 5.8m2.4-8.1c3.1 2.9 3.1 7.5 0 10.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+    grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="4" y="4" width="4" height="4" rx=".7"/><rect x="10" y="4" width="4" height="4" rx=".7"/><rect x="16" y="4" width="4" height="4" rx=".7"/><rect x="4" y="10" width="4" height="4" rx=".7"/><rect x="10" y="10" width="4" height="4" rx=".7"/><rect x="16" y="10" width="4" height="4" rx=".7"/><rect x="4" y="16" width="4" height="4" rx=".7"/><rect x="10" y="16" width="4" height="4" rx=".7"/><rect x="16" y="16" width="4" height="4" rx=".7"/></g></svg>`,
+    map: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 5.8 5-2.1 6.2 2.1 5.2-2.1v14.5l-5.2 2.1-6.2-2.1-5 2.1V5.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.8 3.7v14.5M15 5.8v14.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`,
+    left: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.8 4.8-7.2 7.2 7.2 7.2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    right: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.2 4.8 7.2 7.2-7.2 7.2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   };
 
   const vmin = n => `${n}vmin`;
+  const clampSensitivity = value => Math.max(50, Math.min(200, Number(value) || 100));
+  let touchSensitivity = (() => {
+    try {
+      return clampSensitivity(window.GTA3_TOUCH_SENSITIVITY || localStorage.getItem("gta3.touchSensitivity") || 100);
+    } catch {
+      return 100;
+    }
+  })();
+  const sensitivityCurve = value => {
+    const sign = Math.sign(value);
+    const magnitude = Math.min(1, Math.abs(value));
+    const ratio = touchSensitivity / 100;
+    const exponent = ratio >= 1
+      ? 1 / (1 + (ratio - 1) * 0.9)
+      : 1 + (1 - ratio) * 1.4;
+    return sign * Math.pow(magnitude, exponent);
+  };
   const isDesktopHUD = () =>
     matchMedia("(hover:hover) and (pointer:fine)").matches ||
     Math.min(window.innerWidth || 0, window.innerHeight || 0) >= 700;
@@ -264,9 +281,11 @@
       const py = dy * scale;
       const nx = Math.max(-1, Math.min(1, px / max));
       const ny = Math.max(-1, Math.min(1, py / max));
+      const sx = sensitivityCurve(nx);
+      const sy = sensitivityCurve(ny);
       this.knob.style.transform = `translate(calc(-50% + ${px}px),calc(-50% + ${py}px))`;
-      this.bridge.set(CONTROL.LEFT_X, Math.round(nx * 127));
-      this.bridge.set(CONTROL.LEFT_Y, Math.round(ny * 127));
+      this.bridge.set(CONTROL.LEFT_X, Math.round(sx * 127));
+      this.bridge.set(CONTROL.LEFT_Y, Math.round(sy * 127));
     }
 
     reset() {
@@ -447,6 +466,9 @@
       window.addEventListener("gta3-touch-controls-change", e => {
         this.enabledMode = e.detail?.mode || "auto";
         this.refreshVisibility();
+      });
+      window.addEventListener("gta3-touch-sensitivity-change", e => {
+        touchSensitivity = clampSensitivity(e.detail?.value);
       });
       window.addEventListener("resize", () => this.refreshVisibility());
       window.addEventListener("blur", () => this.resetAll());
