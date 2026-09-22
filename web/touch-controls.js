@@ -17,14 +17,14 @@
     // steering ~65-72px, pedals ~78-85px and utility ~38-42px.
     joystick: { size: 28.0, knob: 12.0, left: 3.0, bottom: 4.0, zoneWidth: 50 },
     steering: { size: 19.0, gap: 2.0, left: 3.0, bottom: 4.5 },
-    horn: { size: 11.5, left: 31.0, bottom: 24.0 },
+    horn: { size: 11.5, left: 31.0, bottom: 26.0 },
 
     sprint: { size: 15.5, right: 3.0, bottom: 13.0 },
-    action: { size: 15.5, right: 19.0, bottom: 29.0 },
+    action: { size: 15.5, right: 19.0, bottom: 34.0 },
 
     accelerate: { size: 21.0, right: 3.0, bottom: 10.0 },
-    brake: { size: 21.0, right: 25.0, bottom: 10.0 },
-    handbrake: { size: 13.5, right: 43.0, bottom: 28.0 },
+    brake: { size: 21.0, right: 26.5, bottom: 10.0 },
+    handbrake: { size: 13.5, right: 43.0, bottom: 34.0 },
 
     fire: { size: 13.5, right: 3.0, top: 13.0 },
     utility: { size: 9.5, gap: 1.8, right: 2.5, bottom: 2.0 },
