@@ -121,6 +121,7 @@
             <span class="game-window-time">TIME <b id="loading-timer">00:00</b></span>
           </div>
           <div class="game-window-actions">
+            <button id="save-manager-btn" type="button">Save Manager</button>
             <button id="game-fullscreen-btn" type="button">Fullscreen</button>
             <button id="game-window-close" type="button">Close</button>
           </div>
@@ -247,6 +248,22 @@
           </div>
         </aside>
         </div>
+
+        <div id="save-manager-overlay" class="save-manager-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="save-manager-title">
+          <div class="save-manager-card">
+            <div class="save-manager-head">
+              <div>
+                <span class="save-manager-kicker">GTA III BROWSER</span>
+                <h2 id="save-manager-title">Save Manager</h2>
+              </div>
+              <button id="save-manager-close" type="button" aria-label="Close save manager">×</button>
+            </div>
+            <p id="save-manager-status" class="save-manager-status">Save storage is preparing…</p>
+            <div id="save-manager-list" class="save-manager-list"></div>
+            <p class="save-manager-help">GTA III uses 8 native save slots. Uploading a compatible <code>.b</code> save places it into the selected slot and immediately loads it after validation.</p>
+            <input id="save-upload-input" type="file" accept=".b,application/octet-stream" hidden>
+          </div>
+        </div>
       </section>
 
       <div class="content-grid">
@@ -359,7 +376,8 @@
   <script src="opfs-cache.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" crossorigin="anonymous"></script>
   <script src="vfs.js?v=16"></script>
-  <script src="saves.js?v=11"></script>
+  <script src="saves.js?v=12"></script>
+  <script src="save-manager.js?v=1"></script>
   <script src="input.js?v=10"></script>
   <script src="perf.js?v=10"></script>
   <script src="boot.js?v=10"></script>

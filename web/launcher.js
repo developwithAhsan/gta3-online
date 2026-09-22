@@ -944,9 +944,9 @@
 		els.assetsOverlay.classList.add("hidden");
 		els.heroLayer?.classList.add("hidden");
 		showLoadingOverlay();
-		// Never hold the Play flow at a "save restore" checkpoint. The browser
-		// build currently uses session-only MEMFS saves, so prepare that directory
-		// opportunistically and enter the engine immediately.
+		// Restore the small native save-slot files before re3 scans its frontend
+		// slots. OPFS access here is tiny compared with the game archive and avoids
+		// the old nested-IDBFS startup stall.
 		setLoadingTitle("Booting GTA III");
 		setLoadingStage("ENGINE");
 		setLoadingStatus("Starting the re3 engine…");
@@ -955,14 +955,10 @@
 		setStatus("loading", "starting re3 engine…");
 
 		try {
-			const saveSetup = Re3Saves.mountAndRestore(instance, mountPoint, log);
-			if (saveSetup && typeof saveSetup.catch === "function") {
-				saveSetup.catch((err) =>
-					log(`[Save] Session save setup failed; continuing without persistence: ${err}`, "stderr")
-				);
-			}
+			setLoadingDetail("Restoring GTA III save slots from browser storage.");
+			await Re3Saves.mountAndRestore(instance, mountPoint, log);
 		} catch (err) {
-			log(`[Save] Session save setup failed; continuing: ${err}`, "stderr");
+			log(`[Save] Save restore failed; continuing with session memory: ${err}`, "stderr");
 		}
 
 		AssetVFS.chdirToRoot(instance.FS, mountPoint);

@@ -1,195 +1,268 @@
-// Persistent save storage for re3 (browser build). See docs/SAVES_WASM.md.
-//
-// re3's own save system (src/save/PCSave.cpp, src/save/GenericGameStorage.cpp)
-// is completely unmodified in *what* it does: it still opens/reads/writes
-// plain files with CFileMgr, under a directory it computes itself
-// (_psGetUserFilesFolder() -> "userfiles", src/skel/glfw/glfw.cpp). This file
-// only makes that one directory persist across page reloads, reusing the
-// exact same IDBFS/IndexedDB mechanism web/vfs.js already uses for game
-// assets -- but as its OWN, separate IDBFS mount, so a save (tens of KB)
-// never needs to sync the entire multi-hundred-MB asset tree, and vice versa.
-//
-// Two entry points:
-//   - mountAndRestore(instance, assetMountPoint, logFn): called once from
-//     web/launcher.js's runEngineMain(), BEFORE re3's own callMain() runs.
-//     Mounts IDBFS at <assetMountPoint>/userfiles and restores whatever was
-//     persisted last time (FS.syncfs(true)) -- awaited, so re3's own startup
-//     save-slot scan (C_PcSave::PopulateSlotInfo(), called from the frontend
-//     menu once the engine is running) never sees a directory the browser
-//     hasn't finished restoring into yet.
-//   - window.Re3Saves.onSaveDirChanged(reason): called directly from C++
-//     (src/save/PCSave.cpp's re3_NotifySaveDirChangedJS, right after
-//     SaveSlot()/DeleteSlot() finish touching a file) to queue a persist
-//     (FS.syncfs(false)) back to IndexedDB.
-
+// GTA III browser save persistence + slot file manager.
+// Stores the eight native GTA3sf<N>.b files in OPFS and mirrors them into
+// /game/userfiles for the re3 runtime.
 (() => {
-	"use strict";
+  "use strict";
 
-	const SAVE_SUBDIR = "userfiles";
+  const SAVE_SUBDIR = "userfiles";
+  const SLOT_COUNT = 8;
+  const OPFS_DIR = "_gta3_save_manager_v1";
 
-	let FS = null;
-	let saveDir = null;
-	let saveMount = null; // only used when persistent IDBFS saves are enabled
-	let backend = "not mounted";
-	let logFn = () => {};
+  let FS = null;
+  let saveDir = null;
+  let backend = "not mounted";
+  let ready = false;
+  let logFn = () => {};
+  let onStateChange = () => {};
 
-	// --- sync state machine ---------------------------------------------------
-	// IDLE -> (change) -> SYNCING -> (another change arrived while syncing?)
-	//   no  -> IDLE
-	//   yes -> sync again, then re-evaluate
-	// This guarantees FS.syncfs(false) calls never overlap, and that the
-	// *last* change made before the sync queue drains is always the one that
-	// ends up persisted -- never silently dropped.
-	const IDLE = "idle";
-	const SYNCING = "syncing";
-	let state = IDLE;
-	let pending = false;
-	let lastSyncResult = null; // "success" | "failure" | null (never synced yet)
-	let lastSyncError = null;
-	let lastSyncAt = null;
-	let onStateChange = () => {};
+  let state = "idle";
+  let pending = false;
+  let syncPromise = null;
+  let lastSyncResult = null;
+  let lastSyncError = null;
+  let lastSyncAt = null;
 
-	function setState(next) {
-		state = next;
-		try { onStateChange(); } catch { /* diagnostics-panel errors must not break saving */ }
-	}
+  const slotName = (slot) => `GTA3sf${slot + 1}.b`;
+  const slotPath = (slot) => `${saveDir}/${slotName(slot)}`;
 
-	// Deliberately NOT the top-level FS.syncfs(): that call walks *every* mounted
-	// filesystem from root (FS.getMounts(FS.root.mount)), and saveDir is mounted
-	// *inside* the asset root (assetMountPoint/userfiles is a child of the /game
-	// IDBFS mount, per the game's own relative-path expectations -- see
-	// mountAndRestore() below). Emscripten's IDBFS.getLocalSet() walks its whole
-	// subtree including nested mount points, so a global FS.syncfs() call ends up
-	// asking the *asset* mount to reconcile a child directory that is actually a
-	// different IDBFS mount underneath it -- and when that diff says "this local
-	// entry isn't in my remote set, remove it", it calls FS.rmdir() on a live
-	// mountpoint, which throws (ErrnoError errno 10). Calling the save mount's own
-	// `type.syncfs` directly scopes the operation to exactly this one mount, so it
-	// can never touch (or be touched by) the asset tree's own sync.
-	function syncfsAsync(populate) {
-		return new Promise((resolve, reject) => {
-			saveMount.type.syncfs(saveMount, populate, (err) => (err ? reject(err) : resolve()));
-		});
-	}
+  function emitChange() {
+    try { onStateChange(); } catch {}
+    try { window.dispatchEvent(new CustomEvent("gta3-saves-change")); } catch {}
+  }
 
-	async function runSync() {
-		setState(SYNCING);
-		try {
-			await syncfsAsync(false);
-			lastSyncResult = "success";
-			lastSyncError = null;
-			logFn("[Save] Sync complete", "info");
-		} catch (err) {
-			lastSyncResult = "failure";
-			lastSyncError = String((err && err.message) || err);
-			logFn(`[Save] ERROR: IndexedDB sync failed: ${lastSyncError}`, "stderr");
-		}
-		lastSyncAt = new Date();
-		if (pending) {
-			pending = false;
-			await runSync(); // a newer change arrived mid-sync -- run once more
-			return;
-		}
-		setState(IDLE);
-	}
+  function validateSlot(slot) {
+    const n = Number(slot);
+    if (!Number.isInteger(n) || n < 0 || n >= SLOT_COUNT)
+      throw new RangeError(`save slot must be 0..${SLOT_COUNT - 1}`);
+    return n;
+  }
 
-	function requestSync() {
-		if (!FS || !saveDir || !saveMount) return; // session-only mode has nothing to persist
-		if (state === SYNCING) {
-			pending = true; // coalesce -- never start a second overlapping syncfs()
-			return;
-		}
-		runSync();
-	}
+  function opfsSupported() {
+    return !!navigator.storage?.getDirectory;
+  }
 
-	/** Called directly from C++ (src/save/PCSave.cpp) right after a save/delete. */
-	function onSaveDirChanged(reason, filename) {
-		logFn(reason === "delete" ? `[Save] Save deleted: ${filename}` : `[Save] Save written: ${filename}`, "info");
-		logFn("[Save] Syncing to IndexedDB…", "info");
-		requestSync();
-	}
+  async function getOpfsDir() {
+    const root = await navigator.storage.getDirectory();
+    return root.getDirectoryHandle(OPFS_DIR, { create: true });
+  }
 
-	/**
-	 * Mount a dedicated IDBFS at <assetMountPoint>/userfiles and restore
-	 * whatever was persisted last session. Must be awaited by the caller --
-	 * FS.syncfs() is asynchronous, and re3's startup save-slot scan must never
-	 * run before this resolves. On any failure (IDBFS unavailable, e.g. some
-	 * private-browsing modes), falls back to a plain in-memory directory: the
-	 * game can still save normally for the current session, it just won't
-	 * persist across a reload.
-	 */
-	async function mountAndRestore(instance, assetMountPoint, log) {
-		logFn = log || logFn;
-		FS = instance.FS;
-		saveDir = `${assetMountPoint.replace(/\/+$/, "")}/${SAVE_SUBDIR}`;
+  async function removeOpfsFile(dir, name) {
+    try {
+      await dir.removeEntry(name);
+    } catch (err) {
+      if (err?.name !== "NotFoundError") throw err;
+    }
+  }
 
-		try {
-			FS.mkdirTree(saveDir);
-		} catch (e) {
-			if (!FS.analyzePath(saveDir).exists) throw e;
-		}
+  async function persistAllNow() {
+    if (!ready || !FS || !saveDir || !opfsSupported()) return;
+    const dir = await getOpfsDir();
 
-		// Do not block GTA III startup on IndexedDB.
-		//
-		// Some Chromium/ChromeOS configurations can leave IDBFS populate
-		// (syncfs(true)) pending for a very long time. launcher.js waits for
-		// this function before callMain(), so the visible loader remains at 12%
-		// forever even though the WASM engine itself is ready.
-		//
-		// For reliable browser gameplay, saves therefore use the already-mounted
-		// MEMFS game filesystem for this session. This keeps normal GTA III save
-		// file I/O working without an asynchronous startup dependency. Persistent
-		// saves can be reintroduced later with a non-blocking OPFS/worker design.
-		saveMount = null;
-		backend = "MEMFS (session-only)";
-		logFn(`[Save] Session save directory ready at ${saveDir}; IndexedDB restore skipped for fast boot`, "info");
-		onStateChange();
-	}
-	/** Developer control: sync now instead of waiting for the next save. */
-	function forceSync() {
-		if (!FS || !saveDir || !saveMount) {
-			logFn("[Save] Persistent sync is disabled; saves are session-only", "info");
-			return;
-		}
-		requestSync();
-	}
+    for (let slot = 0; slot < SLOT_COUNT; slot++) {
+      const name = slotName(slot);
+      const path = slotPath(slot);
+      if (FS.analyzePath(path).exists) {
+        const bytes = FS.readFile(path, { encoding: "binary" });
+        const handle = await dir.getFileHandle(name, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(bytes);
+        await writable.close();
+      } else {
+        await removeOpfsFile(dir, name);
+      }
+    }
+  }
 
-	/** Developer control: destructive -- caller (launcher.js) must confirm first. */
-	async function clearSaves() {
-		if (!FS || !saveDir) throw new Error("save directory not mounted");
-		for (const name of FS.readdir(saveDir)) {
-			if (name === "." || name === "..") continue;
-			try {
-				FS.unlink(`${saveDir}/${name}`);
-			} catch {
-				/* not a plain file (shouldn't happen under userfiles/) -- skip it */
-			}
-		}
-		if (saveMount) await syncfsAsync(false);
-		logFn("[Save] Browser saves cleared", "info");
-	}
+  async function runSyncLoop() {
+    state = "syncing";
+    emitChange();
+    try {
+      do {
+        pending = false;
+        await persistAllNow();
+      } while (pending);
+      lastSyncResult = "success";
+      lastSyncError = null;
+      logFn("[Save] OPFS sync complete", "info");
+    } catch (err) {
+      lastSyncResult = "failure";
+      lastSyncError = String(err?.message || err);
+      logFn(`[Save] OPFS sync failed: ${lastSyncError}`, "stderr");
+    } finally {
+      lastSyncAt = new Date();
+      state = "idle";
+      syncPromise = null;
+      emitChange();
+    }
+  }
 
-	function getStatus() {
-		return {
-			backend,
-			saveDir,
-			state,
-			lastSyncResult,
-			lastSyncError,
-			lastSyncAt,
-		};
-	}
+  function requestSync() {
+    if (!ready || backend !== "OPFS") return Promise.resolve();
+    pending = true;
+    if (!syncPromise) syncPromise = runSyncLoop();
+    return syncPromise;
+  }
 
-	function setOnStateChange(fn) {
-		onStateChange = fn || (() => {});
-	}
+  async function restoreFromOpfs() {
+    const dir = await getOpfsDir();
+    let restored = 0;
+    for (let slot = 0; slot < SLOT_COUNT; slot++) {
+      const name = slotName(slot);
+      try {
+        const handle = await dir.getFileHandle(name);
+        const file = await handle.getFile();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (bytes.byteLength > 0) {
+          FS.writeFile(slotPath(slot), bytes);
+          restored++;
+        }
+      } catch (err) {
+        if (err?.name !== "NotFoundError") throw err;
+      }
+    }
+    return restored;
+  }
 
-	window.Re3Saves = {
-		mountAndRestore,
-		onSaveDirChanged,
-		forceSync,
-		clearSaves,
-		getStatus,
-		setOnStateChange,
-	};
+  async function mountAndRestore(instance, assetMountPoint, log) {
+    logFn = log || logFn;
+    FS = instance.FS;
+    saveDir = `${assetMountPoint.replace(/\/+$/, "")}/${SAVE_SUBDIR}`;
+
+    try {
+      FS.mkdirTree(saveDir);
+    } catch (err) {
+      if (!FS.analyzePath(saveDir).exists) throw err;
+    }
+
+    if (opfsSupported()) {
+      try {
+        await navigator.storage.persist?.();
+        const count = await restoreFromOpfs();
+        backend = "OPFS";
+        ready = true;
+        logFn(`[Save] OPFS save manager ready; restored ${count} slot file(s)`, "info");
+        emitChange();
+        return;
+      } catch (err) {
+        logFn(`[Save] OPFS restore unavailable; using session memory: ${err}`, "stderr");
+      }
+    }
+
+    backend = "MEMFS (session-only)";
+    ready = true;
+    emitChange();
+  }
+
+  function onSaveDirChanged(reason, filename) {
+    logFn(reason === "delete" ? `[Save] Deleted: ${filename}` : `[Save] Written: ${filename}`, "info");
+    requestSync();
+    emitChange();
+  }
+
+  function listSlots() {
+    const result = [];
+    for (let slot = 0; slot < SLOT_COUNT; slot++) {
+      const name = slotName(slot);
+      const path = saveDir ? slotPath(slot) : null;
+      let exists = false;
+      let size = 0;
+      if (FS && path && FS.analyzePath(path).exists) {
+        exists = true;
+        try { size = FS.stat(path).size || 0; } catch {}
+      }
+      result.push({ slot, number: slot + 1, name, path, exists, size });
+    }
+    return result;
+  }
+
+  async function uploadSlot(slot, file) {
+    slot = validateSlot(slot);
+    if (!ready || !FS || !saveDir) throw new Error("Save system is not ready yet.");
+    if (!file) throw new Error("No save file selected.");
+    if (file.size <= 0) throw new Error("The selected save file is empty.");
+    if (file.size > 2 * 1024 * 1024) throw new Error("The selected file is too large to be a GTA III save.");
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    FS.writeFile(slotPath(slot), bytes);
+    logFn(`[Save Manager] Imported ${file.name} into slot ${slot + 1} (${bytes.byteLength} bytes)`, "info");
+    await requestSync();
+    emitChange();
+    return { slot, size: bytes.byteLength, name: slotName(slot) };
+  }
+
+  function downloadSlot(slot) {
+    slot = validateSlot(slot);
+    if (!ready || !FS || !saveDir) throw new Error("Save system is not ready yet.");
+    const path = slotPath(slot);
+    if (!FS.analyzePath(path).exists) throw new Error(`Slot ${slot + 1} is empty.`);
+
+    const bytes = FS.readFile(path, { encoding: "binary" });
+    const blob = new Blob([bytes], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = slotName(slot);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    logFn(`[Save Manager] Downloaded slot ${slot + 1}`, "info");
+  }
+
+  async function deleteSlot(slot) {
+    slot = validateSlot(slot);
+    if (!ready || !FS || !saveDir) throw new Error("Save system is not ready yet.");
+    const path = slotPath(slot);
+    if (FS.analyzePath(path).exists) FS.unlink(path);
+    await requestSync();
+    emitChange();
+  }
+
+  async function clearSaves() {
+    if (!ready || !FS || !saveDir) throw new Error("Save system is not ready yet.");
+    for (let slot = 0; slot < SLOT_COUNT; slot++) {
+      const path = slotPath(slot);
+      if (FS.analyzePath(path).exists) {
+        try { FS.unlink(path); } catch {}
+      }
+    }
+    await requestSync();
+    logFn("[Save] All browser save slots cleared", "info");
+    emitChange();
+  }
+
+  function forceSync() {
+    return requestSync();
+  }
+
+  function getStatus() {
+    return {
+      backend,
+      saveDir,
+      state,
+      ready,
+      slotCount: SLOT_COUNT,
+      lastSyncResult,
+      lastSyncError,
+      lastSyncAt,
+    };
+  }
+
+  function setOnStateChange(fn) {
+    onStateChange = fn || (() => {});
+  }
+
+  window.Re3Saves = {
+    SLOT_COUNT,
+    mountAndRestore,
+    onSaveDirChanged,
+    listSlots,
+    uploadSlot,
+    downloadSlot,
+    deleteSlot,
+    forceSync,
+    clearSaves,
+    getStatus,
+    setOnStateChange,
+  };
 })();

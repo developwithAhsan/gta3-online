@@ -41,6 +41,7 @@ jobs:
           node --check web/opfs-cache-worker.js
           node --check cloudflare-worker/worker.js
           node --check web/saves.js
+          node --check web/save-manager.js
           node --check web/input.js
           node --check web/perf.js
           node --check web/boot.js

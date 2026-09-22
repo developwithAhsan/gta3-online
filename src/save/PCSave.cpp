@@ -104,6 +104,29 @@ re3_DebugTriggerLoad(int slot)
 	FrontEndMenuManager.m_nCurrScreen = MENUPAGE_LOADING_IN_PROGRESS;
 	return 1;
 }
+
+// Browser Save Manager: validate a native GTA III slot and enter the same
+// restart/load path used by the frontend. Unlike the debug frontend-only helper
+// above, this is designed to work while the player is already in gameplay too.
+extern "C" EMSCRIPTEN_KEEPALIVE int
+re3_BrowserLoadSlot(int slot)
+{
+	if (slot < 0 || slot >= SLOT_COUNT)
+		return -3;
+
+	PcSaveHelper.PopulateSlotInfo();
+	if (Slots[slot + 1] != SLOT_OK)
+		return -2;
+
+	FrontEndMenuManager.m_nCurrSaveSlot = slot;
+	if (!CheckSlotDataValid(slot))
+		return -4;
+
+	FrontEndMenuManager.m_bWantToLoad = true;
+	FrontEndMenuManager.m_bWantToRestart = true;
+	FrontEndMenuManager.m_bMenuActive = false;
+	return 1;
+}
 #endif
 
 const char* _psGetUserFilesFolder();
