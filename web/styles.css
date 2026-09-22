@@ -770,7 +770,7 @@ body.game-window-open{overflow:hidden}
 }
 
 
-/* GTA III screenshot slideshow behind About section */
+/* GTA III rotating screenshot slideshow behind About section */
 .gta-about-slideshow{
   position:relative;
   isolation:isolate;
@@ -778,36 +778,63 @@ body.game-window-open{overflow:hidden}
   overflow:hidden;
   background:#111925;
 }
-.gta-about-slideshow::before{
-  content:"";
+.gta-about-slideshow > :not(.about-slides){
+  position:relative;
+  z-index:2;
+}
+.about-slides{
   position:absolute;
   inset:0;
-  z-index:-2;
-  background-image:url("images/gta3-about-slideshow.webp?v=20260922-1");
-  background-size:cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  transform:scale(1.025);
-  filter:saturate(.92) contrast(1.05);
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
 }
+.about-slide{
+  position:absolute;
+  inset:-2%;
+  opacity:0;
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  transform:scale(1.04);
+  animation:aboutScreenshotFade 30s linear infinite;
+  will-change:opacity,transform;
+}
+.about-slide-1{background-image:url("images/about-051.webp");animation-delay:0s}
+.about-slide-2{background-image:url("images/about-042.webp");animation-delay:6s}
+.about-slide-3{background-image:url("images/about-021.webp");animation-delay:12s}
+.about-slide-4{background-image:url("images/about-008.jpg");animation-delay:18s}
+.about-slide-5{background-image:url("images/about-001.webp");animation-delay:24s}
 .gta-about-slideshow::after{
   content:"";
   position:absolute;
   inset:0;
-  z-index:-1;
+  z-index:1;
+  pointer-events:none;
   background:
-    linear-gradient(90deg,rgba(10,16,24,.94) 0%,rgba(10,16,24,.88) 50%,rgba(10,16,24,.72) 100%),
-    linear-gradient(180deg,rgba(10,16,24,.38),rgba(10,16,24,.82));
+    linear-gradient(90deg,rgba(10,16,24,.76) 0%,rgba(10,16,24,.66) 52%,rgba(10,16,24,.54) 100%),
+    linear-gradient(180deg,rgba(10,16,24,.22),rgba(10,16,24,.65));
+}
+@keyframes aboutScreenshotFade{
+  0%{opacity:0;transform:scale(1.04)}
+  4%{opacity:1}
+  18%{opacity:1}
+  22%{opacity:0;transform:scale(1.10)}
+  100%{opacity:0;transform:scale(1.10)}
 }
 .gta-about-slideshow .vc-section-title{
-  text-shadow:0 2px 14px rgba(0,0,0,.85);
+  text-shadow:0 2px 14px rgba(0,0,0,.9);
 }
 .gta-about-slideshow p,
 .gta-about-slideshow li{
-  color:#d0dae4;
-  text-shadow:0 1px 6px rgba(0,0,0,.9);
+  color:#eef4fa;
+  text-shadow:0 1px 7px rgba(0,0,0,.95);
 }
 .gta-about-slideshow strong{color:#fff}
+@media(prefers-reduced-motion:reduce){
+  .about-slide{animation:none;opacity:0}
+  .about-slide-1{opacity:1}
+}
 
 /* Discussion / Webynize comments */
 .discussion-section{
