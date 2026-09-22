@@ -60,8 +60,9 @@ jobs:
           test -s web/images/about-008.jpg
           test -s web/images/about-001.webp
           grep -q 'id="discussion"' web/index.html
-          grep -q "data-webynize-id='13086'" web/index.html
-          grep -q "widgets.webynize.com/comments.js" web/index.html
+          grep -q 'id="disqus_thread"' web/index.html
+          grep -q "gta3-1.disqus.com/embed.js" web/index.html
+          grep -q "gta3-online-homepage" web/index.html
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
           grep -q '@keyframes aboutScreenshotFade' web/styles.css
           grep -q 'images/about-051.webp' web/styles.css

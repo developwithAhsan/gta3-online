@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-slideshow2">
+  <link rel="stylesheet" href="styles.css?v=20260922-disqus1">
 
   <script type="application/ld+json">
   {
@@ -501,9 +501,22 @@
 
       <section class="vc-section discussion-section" id="discussion">
         <h2 class="vc-section-title">Discussion</h2>
-        <p class="discussion-intro">Share your GTA III browser experience, loading fixes, mod ideas, save tips, Liberty City discoveries and feedback with other players.</p>
+        <p class="discussion-intro">Join the GTA III Browser community discussion. Share loading fixes, mod ideas, save tips, Liberty City discoveries and feedback with other players.</p>
         <div class="discussion-widget-shell">
-          <div class='wbnz-comments' data-webynize-id='13086'></div><script defer src='https://widgets.webynize.com/comments.js'></script>
+          <div id="disqus_thread"></div>
+          <script>
+            var disqus_config = function () {
+              this.page.url = 'https://developwithahsan.github.io/gta3-online/';
+              this.page.identifier = 'gta3-online-homepage';
+            };
+            (function() {
+              var d = document, s = d.createElement('script');
+              s.src = 'https://gta3-1.disqus.com/embed.js';
+              s.setAttribute('data-timestamp', +new Date());
+              (d.head || d.body).appendChild(s);
+            })();
+          </script>
+          <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         </div>
       </section>
 
