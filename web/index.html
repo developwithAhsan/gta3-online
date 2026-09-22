@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-touch2">
+  <link rel="stylesheet" href="styles.css?v=20260922-touch3">
 
   <script type="application/ld+json">
   {
@@ -105,6 +105,17 @@
             <button id="touch-controls-toggle" class="setting-toggle" type="button" data-state="auto">AUTO</button>
           </div>
 
+          <label class="player-setting-row" for="touch-sensitivity-input">
+            <span>
+              <strong>TOUCH SENSITIVITY</strong>
+              <small>Joystick response: lower = smoother, higher = faster</small>
+            </span>
+            <div class="touch-sensitivity-setting">
+              <input id="touch-sensitivity-input" class="touch-sensitivity-input" type="range" value="100" min="50" max="200" step="10" aria-label="Touch joystick sensitivity">
+              <output id="touch-sensitivity-value" class="touch-sensitivity-value" for="touch-sensitivity-input">100%</output>
+            </div>
+          </label>
+
           <label class="player-setting-row" for="fps-limit-input">
             <span>
               <strong>FPS LIMIT</strong>
@@ -134,7 +145,7 @@
           <button id="input-debug-btn" type="button" tabindex="-1">Input</button>
           <label id="debug-mode-toggle"><input type="checkbox" id="debug-mode-checkbox" tabindex="-1"> Debug</label>
         </div>
-              <div id="ui-build-marker">UI BUILD 2026.09.22-6</div>
+              <div id="ui-build-marker">UI BUILD 2026.09.22-7</div>
       </section>
 
       <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
@@ -574,7 +585,7 @@
   <script src="perf.js?v=20260922-1"></script>
   <script src="boot.js?v=20260922-1"></script>
   <script src="launcher.js?v=20260922-audio1"></script>
-  <script src="touch-controls.js?v=20260922-touch4"></script>
+  <script src="touch-controls.js?v=20260922-touch5"></script>
   <script>
     (() => {
       const playBtn = document.getElementById("play-game-btn");
@@ -584,6 +595,8 @@
       const gameFullscreenBtn = document.getElementById("game-fullscreen-btn");
       const audioUnlockBtn = document.getElementById("audio-unlock-btn");
       const touchBtn = document.getElementById("touch-controls-toggle");
+      const sensitivityInput = document.getElementById("touch-sensitivity-input");
+      const sensitivityValue = document.getElementById("touch-sensitivity-value");
       const fpsInput = document.getElementById("fps-limit-input");
       const loadingOverlay = document.getElementById("loading-overlay");
       const loadingTitle = document.getElementById("loading-title");
@@ -614,6 +627,18 @@
         window.GTA3_TOUCH_CONTROLS_MODE = next;
         try { localStorage.setItem("gta3.touchControls", next); } catch {}
         window.dispatchEvent(new CustomEvent("gta3-touch-controls-change", { detail: { mode: next } }));
+      }
+
+      function applyTouchSensitivity(rawValue) {
+        let value = Number.parseInt(rawValue, 10);
+        if (!Number.isFinite(value)) value = 100;
+        value = Math.max(50, Math.min(200, value));
+        sensitivityInput.value = String(value);
+        sensitivityValue.value = `${value}%`;
+        sensitivityValue.textContent = `${value}%`;
+        window.GTA3_TOUCH_SENSITIVITY = value;
+        try { localStorage.setItem("gta3.touchSensitivity", String(value)); } catch {}
+        window.dispatchEvent(new CustomEvent("gta3-touch-sensitivity-change", { detail: { value } }));
       }
 
       function applyFpsLimit() {
@@ -748,15 +773,20 @@
         applyTouchState(touchStates[(touchStates.indexOf(current) + 1) % touchStates.length]);
       });
 
+      sensitivityInput.addEventListener("input", () => applyTouchSensitivity(sensitivityInput.value));
+      sensitivityInput.addEventListener("change", () => applyTouchSensitivity(sensitivityInput.value));
+
       fpsInput.addEventListener("change", applyFpsLimit);
       fpsInput.addEventListener("blur", applyFpsLimit);
 
       try {
         applyTouchState(localStorage.getItem("gta3.touchControls") || "auto");
+        applyTouchSensitivity(localStorage.getItem("gta3.touchSensitivity") || "100");
         const savedFps = localStorage.getItem("gta3.fpsLimit");
         if (savedFps !== null) fpsInput.value = savedFps;
       } catch {
         applyTouchState("auto");
+        applyTouchSensitivity("100");
       }
       applyFpsLimit();
 
