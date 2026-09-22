@@ -390,3 +390,5 @@ body.game-window-open{overflow:hidden}
   .player-setting-row small{max-width:190px}
   .setting-toggle,.fps-limit-input{min-width:86px;width:86px}
 }
+
+.seo-guide-links{margin-top:10px!important;color:var(--text-3)!important;font-size:11px!important}.seo-guide-links a{white-space:nowrap}
