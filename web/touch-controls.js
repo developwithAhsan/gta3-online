@@ -422,8 +422,12 @@
 
     refreshVisibility() {
       if (!this.root) return;
-      const enabled = this.enabledMode === "on" || (this.enabledMode === "auto" && this.isTouchEnvironment());
+      // AUTO must remain visible in the dedicated game window even on
+      // Chromebooks/touch laptops that report a fine pointer. Users can still
+      // explicitly hide the HUD with the OFF setting.
+      const enabled = this.enabledMode !== "off";
       this.root.classList.toggle("touch-disabled", !enabled);
+      this.root.setAttribute("aria-hidden", enabled ? "false" : "true");
     }
 
     startPolling() {
