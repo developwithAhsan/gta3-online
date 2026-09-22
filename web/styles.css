@@ -1629,3 +1629,53 @@ body.game-window-open{overflow:hidden}
   height:64%!important;
   transform:none;
 }
+
+
+/* Fully responsive touch HUD v5 */
+.touch-hud{
+  contain:layout style;
+  max-width:none;
+  max-height:none;
+}
+.touch-layout-compact .touch-control-btn[data-short-label]::after{
+  display:none;
+}
+.touch-layout-compact .touch-control-btn[data-short-label] .touch-icon{
+  width:68%!important;
+  height:68%!important;
+  transform:none;
+}
+.touch-layout-compact .touch-fire-btn .touch-icon{
+  width:72%!important;
+  height:72%!important;
+  transform:none;
+}
+.touch-layout-portrait .touch-stats{
+  font-size:clamp(11px,2.55vmin,18px);
+}
+.touch-layout-landscape .touch-stats{
+  font-size:clamp(11px,2.05vmin,20px);
+}
+.touch-layout-large .touch-control-btn{
+  border-width:2px;
+}
+.touch-layout-large .touch-control-btn[data-short-label]::after{
+  font-size:10px;
+}
+.touch-layout-large .touch-radar-frame{
+  border-width:2px;
+}
+.touch-layout-large .touch-joystick{
+  border-width:2px;
+}
+@media (max-height:420px){
+  .touch-radar-frame,
+  .touch-stats{
+    opacity:.62;
+  }
+}
+@media (orientation:portrait) and (max-width:520px){
+  .touch-hud{
+    --touch-opacity:.80;
+  }
+}
