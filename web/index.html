@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-1">
+  <link rel="stylesheet" href="styles.css?v=20260922-2">
 
   <script type="application/ld+json">
   {
@@ -333,12 +333,84 @@
 
           <div class="mod-tabs">
             <button id="mods-tab-btn" class="active" type="button">INSTALLED MODS</button>
+            <button id="workspace-tab-btn" type="button">ZIP WORKSPACE</button>
             <button id="files-tab-btn" type="button">GAME FILES</button>
           </div>
 
           <section id="mods-panel" class="mod-panel">
             <div id="mod-list" class="mod-list"></div>
             <p class="mod-help">Enabled mods are applied in the displayed order after the clean GTA III archive is extracted and before asset validation. Changes take effect on the next game launch/reload.</p>
+          </section>
+
+          <section id="workspace-panel" class="mod-panel hidden">
+            <div class="workspace-source-box">
+              <div class="workspace-source-actions">
+                <button id="workspace-upload-btn" type="button">UPLOAD ZIP</button>
+                <button id="workspace-game-download-btn" type="button">DOWNLOAD GTA III ZIP</button>
+              </div>
+              <div class="workspace-url-row">
+                <input id="workspace-url-input" type="url" placeholder="Or paste a direct ZIP URL (must allow browser CORS)">
+                <button id="workspace-url-download-btn" type="button">DOWNLOAD URL</button>
+                <button id="workspace-resume-btn" class="hidden" type="button">RESUME</button>
+              </div>
+              <input id="workspace-upload-input" type="file" accept=".zip,application/zip" hidden>
+            </div>
+
+            <div id="workspace-progress" class="workspace-progress hidden">
+              <div class="workspace-progress-head">
+                <strong id="workspace-progress-title">DOWNLOADING ZIP…</strong>
+                <span id="workspace-progress-percent">0%</span>
+              </div>
+              <div class="workspace-progress-track"><div id="workspace-progress-fill"></div></div>
+              <div class="workspace-progress-meta">
+                <span id="workspace-progress-bytes">0 MB / 0 MB</span>
+                <span id="workspace-progress-eta">Calculating…</span>
+              </div>
+            </div>
+
+            <div class="workspace-toolbar">
+              <button id="workspace-up-btn" type="button">↑ UP</button>
+              <button id="workspace-new-folder-btn" type="button">NEW FOLDER</button>
+              <button id="workspace-add-files-btn" type="button">ADD FILES</button>
+              <button id="workspace-export-btn" type="button">DOWNLOAD EDITED ZIP</button>
+              <button id="workspace-apply-mod-btn" type="button">APPLY AS MOD</button>
+              <button id="workspace-clear-btn" class="danger" type="button">CLEAR WORKSPACE</button>
+              <input id="workspace-add-files-input" type="file" multiple hidden>
+            </div>
+
+            <div class="workspace-info">
+              <div>
+                <span class="workspace-label">ZIP</span>
+                <strong id="workspace-name">No ZIP loaded</strong>
+              </div>
+              <div>
+                <span class="workspace-label">PATH</span>
+                <div id="workspace-breadcrumb" class="workspace-breadcrumb">/</div>
+              </div>
+              <div>
+                <span class="workspace-label">STATUS</span>
+                <span id="workspace-status">Upload or download a ZIP to begin.</span>
+              </div>
+            </div>
+
+            <div class="workspace-search-row">
+              <input id="workspace-search" type="search" placeholder="Search current folder">
+              <span id="workspace-count">0 items</span>
+            </div>
+            <div id="workspace-file-list" class="workspace-file-list"></div>
+            <p class="mod-help">Folders open like a file manager. Text/config files can be edited in-browser; binary files can be replaced, downloaded, renamed or deleted. The original cached GTA III ZIP remains untouched unless you explicitly download it into this workspace.</p>
+
+            <div id="workspace-editor" class="workspace-editor hidden">
+              <div class="workspace-editor-head">
+                <strong id="workspace-editor-name">Edit file</strong>
+                <button id="workspace-editor-close" type="button">×</button>
+              </div>
+              <textarea id="workspace-editor-text" spellcheck="false"></textarea>
+              <div class="workspace-editor-actions">
+                <button id="workspace-editor-save" type="button">SAVE FILE</button>
+                <button id="workspace-editor-cancel" type="button">CANCEL</button>
+              </div>
+            </div>
           </section>
 
           <section id="files-panel" class="mod-panel hidden">
@@ -465,7 +537,8 @@
   <script src="vfs.js?v=20260922-1"></script>
   <script src="saves.js?v=20260922-1"></script>
   <script src="save-manager.js?v=20260922-1"></script>
-  <script src="mod-manager.js?v=20260922-1"></script>
+  <script src="mod-manager.js?v=20260922-2"></script>
+  <script src="zip-workspace.js?v=20260922-1"></script>
   <script src="input.js?v=20260922-1"></script>
   <script src="perf.js?v=20260922-1"></script>
   <script src="boot.js?v=20260922-1"></script>

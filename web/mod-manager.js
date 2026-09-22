@@ -13,7 +13,9 @@
   const gameFilesBtn = document.getElementById("game-files-btn");
   const modsTabBtn = document.getElementById("mods-tab-btn");
   const filesTabBtn = document.getElementById("files-tab-btn");
+  const workspaceTabBtn = document.getElementById("workspace-tab-btn");
   const modsPanel = document.getElementById("mods-panel");
+  const workspacePanel = document.getElementById("workspace-panel");
   const filesPanel = document.getElementById("files-panel");
   const list = document.getElementById("mod-list");
   const statusEl = document.getElementById("mod-manager-status");
@@ -237,9 +239,13 @@
 
   function showTab(name) {
     const files = name === "files";
-    modsPanel.classList.toggle("hidden", files);
+    const workspace = name === "workspace";
+    const mods = !files && !workspace;
+    modsPanel.classList.toggle("hidden", !mods);
+    workspacePanel?.classList.toggle("hidden", !workspace);
     filesPanel.classList.toggle("hidden", !files);
-    modsTabBtn.classList.toggle("active", !files);
+    modsTabBtn.classList.toggle("active", mods);
+    workspaceTabBtn?.classList.toggle("active", workspace);
     filesTabBtn.classList.toggle("active", files);
   }
 
@@ -413,6 +419,10 @@
     });
   });
   modsTabBtn.addEventListener("click", function() { showTab("mods"); });
+  workspaceTabBtn?.addEventListener("click", function() {
+    showTab("workspace");
+    window.GTA3ZipWorkspace?.refresh?.();
+  });
   filesTabBtn.addEventListener("click", function() {
     if (currentFileSource !== "game" || !visibleEntries.length) {
       browseGameFiles().catch(function(err) {
@@ -458,6 +468,9 @@
     loadMeta: loadMeta,
     listZipEntries: listZipEntries,
     applyEnabledMods: applyEnabledMods,
-    browseGameFiles: browseGameFiles
+    browseGameFiles: browseGameFiles,
+    installMod: installMod,
+    renderMods: renderMods,
+    showTab: showTab
   };
 })();

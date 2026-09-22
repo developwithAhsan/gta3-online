@@ -43,6 +43,7 @@ jobs:
           node --check web/saves.js
           node --check web/save-manager.js
           node --check web/mod-manager.js
+          node --check web/zip-workspace.js
           node --check web/input.js
           node --check web/perf.js
           node --check web/boot.js

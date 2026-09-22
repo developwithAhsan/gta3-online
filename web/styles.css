@@ -672,3 +672,73 @@ body.game-window-open{overflow:hidden}
   .loading-card .progress-track{width:92%;height:20px}
   .loading-tip-wrap{margin-top:34px}
 }
+
+
+/* Persistent ZIP Workspace inside Mod Manager */
+.workspace-source-box{display:grid;gap:8px;margin-bottom:10px}
+.workspace-source-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.workspace-source-actions button,.workspace-url-row button,.workspace-toolbar button,.workspace-editor-actions button{
+  min-height:36px;padding:7px 10px;border:1px solid #32465e;background:#1b2a3b;color:#dce6ef;
+  font-size:9px;font-weight:800;letter-spacing:.06em
+}
+.workspace-url-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+#workspace-url-input,#workspace-search{
+  min-width:0;padding:9px 10px;border:1px solid var(--border-hi);background:#101824;color:#fff;outline:none;font-size:10px
+}
+.workspace-progress{margin:10px 0;padding:10px;border:1px solid var(--border);background:#101824}
+.workspace-progress-head,.workspace-progress-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.workspace-progress-head strong{color:#dfe8f0;font-size:10px;letter-spacing:.08em}
+.workspace-progress-head span,.workspace-progress-meta{color:#70879c;font-size:9px}
+.workspace-progress-track{height:10px;margin:8px 0;border:1px solid #334a63;background:#0b121a;overflow:hidden}
+#workspace-progress-fill{height:100%;width:0;background:#b9cadb;transition:width .15s linear}
+.workspace-toolbar{display:grid;grid-template-columns:repeat(6,auto);gap:6px;margin:10px 0}
+.workspace-toolbar button.danger{color:#d99b9b;border-color:rgba(192,80,80,.42)}
+.workspace-info{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(220px,1.6fr) minmax(180px,1fr);gap:8px;margin:10px 0}
+.workspace-info>div{padding:9px;border:1px solid var(--border);background:#121c29;min-width:0}
+.workspace-label{display:block;margin-bottom:3px;color:#536b83;font-size:8px;font-weight:800;letter-spacing:.1em}
+#workspace-name,#workspace-status{display:block;color:#a9bbcc;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workspace-breadcrumb{display:flex;align-items:center;gap:3px;min-width:0;overflow-x:auto;white-space:nowrap}
+.workspace-crumb{border:0;background:transparent;color:#8da8c1;padding:0;font-size:9px}
+.workspace-crumb:hover{color:#dce8f3;text-decoration:underline}
+.workspace-search-row{display:flex;align-items:center;gap:10px}
+#workspace-search{flex:1}
+#workspace-count{white-space:nowrap;color:#6b8297;font-size:9px}
+.workspace-file-list{margin-top:8px;max-height:47vh;overflow:auto;border:1px solid var(--border);background:#0d141d}
+.workspace-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 95px minmax(280px,auto);gap:10px;align-items:center;
+  padding:8px 9px;border-bottom:1px solid rgba(255,255,255,.04)
+}
+.workspace-row:last-child{border-bottom:0}
+.workspace-entry{display:flex;align-items:center;gap:7px;min-width:0;border:0;background:transparent;color:#cbd7e2;text-align:left;padding:0;font:10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace}
+.workspace-entry:hover{color:#fff}
+.workspace-entry-icon{width:16px;text-align:center;flex:0 0 auto}
+.workspace-entry-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workspace-entry-size{color:#607991;text-align:right;font-size:9px}
+.workspace-entry-actions{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+.workspace-entry-actions button{
+  min-height:28px;padding:5px 7px;border:1px solid #2d4157;background:#172434;color:#b8c8d6;font-size:8px;font-weight:750
+}
+.workspace-entry-actions button.danger{color:#d99b9b;border-color:rgba(192,80,80,.35)}
+.workspace-editor{
+  position:absolute;inset:36px;z-index:20;display:flex;flex-direction:column;
+  border:1px solid #405a75;background:#0d151f;box-shadow:0 20px 70px rgba(0,0,0,.65);padding:12px
+}
+.workspace-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.workspace-editor-head strong{color:#e1eaf2;font-size:11px}
+#workspace-editor-close{width:32px;height:32px;border:1px solid var(--border);background:#172131;color:#fff}
+#workspace-editor-text{
+  flex:1;min-height:300px;resize:none;padding:10px;border:1px solid #2f465e;outline:none;
+  background:#080e15;color:#c8d6e2;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace
+}
+.workspace-editor-actions{display:flex;gap:8px;margin-top:8px}
+@media(max-width:820px){
+  .workspace-source-actions{grid-template-columns:1fr}
+  .workspace-url-row{grid-template-columns:1fr 1fr}
+  #workspace-url-input{grid-column:1/-1}
+  .workspace-toolbar{grid-template-columns:repeat(2,1fr)}
+  .workspace-info{grid-template-columns:1fr}
+  .workspace-row{grid-template-columns:minmax(0,1fr) 72px}
+  .workspace-entry-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr)}
+  .workspace-entry-actions button{width:100%}
+  .workspace-editor{inset:8px}
+}
