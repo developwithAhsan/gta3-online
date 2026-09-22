@@ -1362,3 +1362,60 @@ body.game-window-open{overflow:hidden}
   .game-cheat-name{font-size:10px}
   .game-cheat-code{font-size:9px}
 }
+
+
+/* Toolbar visibility hotfix v2: keep game shortcuts above canvas/fullscreen layers. */
+.game-window-center-actions{
+  position:fixed!important;
+  left:50%!important;
+  top:calc(env(safe-area-inset-top, 0px) + 7px)!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:100005!important;
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:translateX(-50%)!important;
+  pointer-events:auto!important;
+}
+#game-cheats-btn,
+#game-more-games-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-width:94px!important;
+  min-height:36px!important;
+  border:1px solid #55789d!important;
+  background:rgba(20,34,50,.96)!important;
+  color:#fff!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.48)!important;
+}
+#game-sensitivity-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  z-index:100005!important;
+  min-width:94px!important;
+  border-color:#55789d!important;
+  color:#fff!important;
+}
+.game-toolbar-panel:not(.hidden){
+  z-index:100006!important;
+}
+@media(max-width:760px){
+  .game-window-center-actions{
+    top:calc(env(safe-area-inset-top, 0px) + 54px)!important;
+  }
+  #game-cheats-btn,
+  #game-more-games-btn{
+    min-width:88px!important;
+    min-height:34px!important;
+    padding:5px 8px!important;
+    font-size:9px!important;
+  }
+}
