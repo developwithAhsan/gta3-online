@@ -26,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-responsive5">
+  <link rel="stylesheet" href="styles.css?v=20260922-mobile6">
 
   <script type="application/ld+json">
   {
@@ -145,7 +145,7 @@
           <button id="input-debug-btn" type="button" tabindex="-1">Input</button>
           <label id="debug-mode-toggle"><input type="checkbox" id="debug-mode-checkbox" tabindex="-1"> Debug</label>
         </div>
-              <div id="ui-build-marker">UI BUILD 2026.09.22-12</div>
+              <div id="ui-build-marker">UI BUILD 2026.09.22-13</div>
       </section>
 
       <section id="game-window" class="game-window hidden" aria-label="GTA III full-screen game window">
@@ -157,16 +157,51 @@
           </div>
 
           <div class="game-window-center-actions" aria-label="Game shortcuts">
-            <button id="game-cheats-btn" class="game-toolbar-btn" type="button">Cheats</button>
-            <button id="game-more-games-btn" class="game-toolbar-btn" type="button">More Games</button>
+            <button id="game-cheats-btn" class="game-toolbar-btn" type="button" aria-label="Cheats">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8.5 3.5h7l1.2 4.2 3.8 2.3-2.4 3.4.4 4.4-4.4.6L12 22l-2.1-3.6-4.4-.6.4-4.4L3.5 10l3.8-2.3 1.2-4.2Z"/><path d="m9.1 12 2 2 4-4"/></svg>
+              </span>
+              <span class="game-toolbar-label">Cheats</span>
+            </button>
+            <button id="game-more-games-btn" class="game-toolbar-btn" type="button" aria-label="More Games">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7.2 8.2h9.6a4.8 4.8 0 0 1 4.6 6.2l-1.2 3.7a2.1 2.1 0 0 1-3.5.8l-2.1-2H9.4l-2.1 2a2.1 2.1 0 0 1-3.5-.8l-1.2-3.7a4.8 4.8 0 0 1 4.6-6.2Z"/><path d="M7.2 11.2v4m-2-2h4m6.1-.8h.1m2.2 2.1h.1"/></svg>
+              </span>
+              <span class="game-toolbar-label">More Games</span>
+            </button>
           </div>
 
           <div class="game-window-actions">
-            <button id="game-sensitivity-btn" class="game-toolbar-btn" type="button">Sensitivity</button>
-            <button id="save-manager-btn" type="button">Save Manager</button>
-            <button id="audio-unlock-btn" class="audio-unlock-btn hidden" type="button">ENABLE SOUND</button>
-            <button id="game-fullscreen-btn" type="button" title="Optional browser-native fullscreen. Double Esc returns to the website.">Fullscreen</button>
-            <button id="game-window-close" type="button">Close</button>
+            <button id="game-sensitivity-btn" class="game-toolbar-btn" type="button" aria-label="Sensitivity">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h10m4 0h2M4 17h2m4 0h10M14 4v6M10 14v6"/></svg>
+              </span>
+              <span class="game-toolbar-label">Sensitivity</span>
+            </button>
+            <button id="save-manager-btn" type="button" aria-label="Save Manager">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5V3Z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg>
+              </span>
+              <span class="game-toolbar-label">Save Manager</span>
+            </button>
+            <button id="audio-unlock-btn" class="audio-unlock-btn hidden" type="button" aria-label="Enable sound">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 10v4h4l5 4V6l-5 4H5Z"/><path d="M17 9c1.8 1.6 1.8 4.4 0 6m2-8c3 2.8 3 7.2 0 10"/></svg>
+              </span>
+              <span class="game-toolbar-label">Enable Sound</span>
+            </button>
+            <button id="game-fullscreen-btn" type="button" title="Optional browser-native fullscreen. Double Esc returns to the website." aria-label="Fullscreen">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 4H4v4m12-4h4v4M8 20H4v-4m12 4h4v-4"/></svg>
+              </span>
+              <span class="game-toolbar-label">Fullscreen</span>
+            </button>
+            <button id="game-window-close" type="button" aria-label="Close game">
+              <span class="game-toolbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+              </span>
+              <span class="game-toolbar-label">Close</span>
+            </button>
           </div>
         </div>
 
