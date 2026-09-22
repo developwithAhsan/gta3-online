@@ -3,6 +3,7 @@
 
   const overlay = document.getElementById("save-manager-overlay");
   const openBtn = document.getElementById("save-manager-btn");
+  const homeOpenBtn = document.getElementById("home-save-manager-btn");
   const closeBtn = document.getElementById("save-manager-close");
   const list = document.getElementById("save-manager-list");
   const status = document.getElementById("save-manager-status");
@@ -94,11 +95,14 @@
     closeManager();
   }
 
-  openBtn.addEventListener("click", async () => {
+  async function openManager() {
     document.exitPointerLock?.();
     overlay.classList.remove("hidden");
     await refresh();
-  });
+  }
+
+  openBtn.addEventListener("click", openManager);
+  homeOpenBtn?.addEventListener("click", openManager);
 
   closeBtn.addEventListener("click", closeManager);
   overlay.addEventListener("click", (e) => {
