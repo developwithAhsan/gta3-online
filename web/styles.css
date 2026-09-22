@@ -1567,3 +1567,65 @@ body.game-window-open{overflow:hidden}
     font-size:6px;
   }
 }
+
+
+/* SVG touch icon set v4 */
+.touch-control-btn .touch-icon{
+  display:block;
+  width:64%;
+  height:64%;
+  overflow:visible;
+  fill:none;
+  color:rgba(250,252,255,.94);
+  filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.72));
+  shape-rendering:geometricPrecision;
+  pointer-events:none;
+}
+.touch-control-btn[data-short-label] .touch-icon{
+  width:60%;
+  height:60%;
+  transform:translateY(-9%);
+}
+.touch-control-btn.is-pressed .touch-icon{
+  color:#fff;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.58));
+}
+.touch-icon-run,
+.touch-icon-jump{width:63%!important;height:63%!important}
+.touch-icon-car,
+.touch-icon-exit{width:67%!important;height:67%!important}
+.touch-icon-fist{width:64%!important;height:64%!important}
+.touch-icon-gun{width:69%!important;height:69%!important}
+.touch-icon-gas,
+.touch-icon-brake{width:58%!important;height:58%!important}
+.touch-icon-handbrake{width:61%!important;height:61%!important}
+.touch-icon-horn{width:64%!important;height:64%!important}
+.touch-icon-weapons,
+.touch-icon-map{width:61%!important;height:61%!important}
+.touch-icon-left,
+.touch-icon-right{width:52%!important;height:52%!important}
+.accelerate-btn .touch-icon,
+.brake-btn .touch-icon,
+.handbrake-btn .touch-icon,
+.horn-btn .touch-icon{
+  transform:translateY(-9%);
+}
+.touch-fire-btn .touch-icon{
+  width:67%!important;
+  height:67%!important;
+  transform:translateY(-6%);
+}
+.touch-action-btn .touch-icon{
+  width:64%!important;
+  height:64%!important;
+}
+.touch-steer-btn .touch-icon{
+  width:52%!important;
+  height:52%!important;
+  transform:none;
+}
+.touch-utility .touch-icon{
+  width:64%!important;
+  height:64%!important;
+  transform:none;
+}
