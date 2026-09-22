@@ -52,6 +52,9 @@ jobs:
           echo "WASM bundle:"
           ls -lh web/build/re3_wasm.*
 
+      - name: Run SEO audit
+        run: python scripts/seo_audit.py
+
       - name: Prepare GitHub Pages files
         run: |
           touch web/.nojekyll
