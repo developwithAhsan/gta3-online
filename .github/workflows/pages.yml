@@ -63,6 +63,7 @@ jobs:
           grep -q 'id="disqus_thread"' web/index.html
           grep -q "gta3-1.disqus.com/embed.js" web/index.html
           grep -q "gta3-online-homepage" web/index.html
+          ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
           grep -q '@keyframes aboutScreenshotFade' web/styles.css
           grep -q 'images/about-051.webp' web/styles.css
