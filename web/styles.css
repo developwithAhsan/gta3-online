@@ -1127,3 +1127,238 @@ body.game-window-open{overflow:hidden}
   .on-foot-control,
   .vehicle-control{transition:none!important}
 }
+
+
+/* In-game toolbar shortcuts, cheats and sensitivity */
+.game-window-toolbar{
+  position:relative;
+  z-index:160;
+}
+.game-window-center-actions{
+  position:absolute;
+  left:50%;
+  top:50%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transform:translate(-50%,-50%);
+  z-index:2;
+}
+.game-toolbar-btn{
+  min-height:34px;
+  padding:6px 12px;
+  border:1px solid #344a63;
+  background:#172131;
+  color:#c8d4df;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.05em;
+  white-space:nowrap;
+}
+.game-toolbar-btn:hover,
+.game-toolbar-btn.active{
+  border-color:#6c91bb;
+  background:#22344a;
+  color:#fff;
+}
+.game-toolbar-panel{
+  position:absolute;
+  top:56px;
+  z-index:155;
+  border:1px solid #334a64;
+  background:rgba(13,20,30,.97);
+  box-shadow:0 18px 55px rgba(0,0,0,.55);
+  color:#dce5ee;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.game-cheats-panel{
+  left:50%;
+  width:min(760px,94vw);
+  max-height:calc(100vh - 78px);
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+}
+.game-sensitivity-panel{
+  right:12px;
+  width:min(360px,90vw);
+}
+.game-more-games-panel{
+  left:50%;
+  width:min(420px,86vw);
+  height:180px;
+  transform:translateX(-50%);
+}
+.game-toolbar-panel-head{
+  flex:0 0 auto;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:13px 14px;
+  border-bottom:1px solid #273a50;
+  background:#121d2b;
+}
+.game-toolbar-panel-head>div{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  gap:2px;
+}
+.game-toolbar-panel-head strong{
+  color:#fff;
+  font-size:12px;
+  letter-spacing:.09em;
+}
+.game-toolbar-panel-head small{
+  color:#8097ae;
+  font-size:10px;
+  line-height:1.45;
+}
+.game-toolbar-panel-close{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  padding:0;
+  border:1px solid #334a63;
+  background:#192638;
+  color:#d6e1ec;
+  font-size:21px;
+  line-height:1;
+}
+.game-cheats-list{
+  min-height:0;
+  overflow:auto;
+  padding:8px;
+  overscroll-behavior:contain;
+}
+.game-cheat-item{
+  width:100%;
+  min-height:46px;
+  display:grid;
+  grid-template-columns:minmax(190px,1fr) minmax(150px,.75fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:8px 10px;
+  border:0;
+  border-bottom:1px solid #223448;
+  background:transparent;
+  color:#dce6ef;
+  text-align:left;
+  cursor:pointer;
+}
+.game-cheat-item:last-child{border-bottom:0}
+.game-cheat-item:hover,
+.game-cheat-item:focus-visible{
+  background:#1a2a3d;
+  outline:none;
+}
+.game-cheat-name{
+  font-size:11px;
+  font-weight:700;
+}
+.game-cheat-code{
+  overflow:hidden;
+  color:#9ebfe1;
+  font-size:10px;
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.game-cheat-apply{
+  padding:4px 7px;
+  border:1px solid #3c5773;
+  color:#a9c5e3;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.game-cheat-item:active .game-cheat-apply{
+  border-color:#6fa171;
+  color:#b9dfbb;
+}
+.game-cheat-status{
+  flex:0 0 auto;
+  min-height:38px;
+  padding:10px 13px;
+  border-top:1px solid #273a50;
+  background:#101923;
+  color:#8499ad;
+  font-size:10px;
+}
+.game-cheat-status[data-state="success"]{color:#a8dbb6}
+.game-cheat-status[data-state="error"]{color:#e1a0a0}
+.game-toolbar-sensitivity-control{
+  display:grid;
+  grid-template-columns:1fr 62px;
+  align-items:center;
+  gap:12px;
+  padding:18px 14px;
+}
+#game-sensitivity-range{
+  width:100%;
+  accent-color:#7da8d4;
+}
+#game-sensitivity-output{
+  padding:7px 8px;
+  border:1px solid #354c66;
+  background:#111925;
+  color:#e2ebf4;
+  text-align:center;
+  font-size:11px;
+  font-weight:800;
+}
+
+@media(max-width:980px){
+  .game-window-center-actions{
+    gap:5px;
+  }
+  .game-window-center-actions .game-toolbar-btn{
+    padding:5px 8px;
+    font-size:9px;
+  }
+  .game-window-actions #game-sensitivity-btn{
+    padding:5px 8px;
+  }
+}
+@media(max-width:760px){
+  .game-window-toolbar{
+    min-height:92px;
+    padding-bottom:42px;
+  }
+  .game-window-center-actions{
+    top:auto;
+    bottom:7px;
+  }
+  .game-toolbar-panel{
+    top:96px;
+  }
+  .game-cheat-item{
+    grid-template-columns:1fr auto;
+    gap:4px 10px;
+  }
+  .game-cheat-code{
+    grid-column:1;
+    grid-row:2;
+  }
+  .game-cheat-apply{
+    grid-column:2;
+    grid-row:1/3;
+  }
+}
+@media(max-width:520px){
+  .game-window-center-actions{
+    width:100%;
+    justify-content:center;
+  }
+  .game-cheats-panel{
+    width:96vw;
+  }
+  .game-sensitivity-panel{
+    right:2vw;
+    width:96vw;
+  }
+  .game-cheat-name{font-size:10px}
+  .game-cheat-code{font-size:9px}
+}
