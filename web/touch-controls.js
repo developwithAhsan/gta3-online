@@ -7,17 +7,25 @@
     opacity: 0.66,
     transitionMs: 200,
     pollMs: 140,
-    joystick: { size: 18, knob: 7.5, left: 3.2, bottom: 4.0 },
-    steering: { size: 10.5, gap: 1.2, left: 2.8, bottom: 5.0 },
-    horn: { size: 6.4, left: 24.8, bottom: 13.6 },
-    sprint: { size: 9.2, right: 4.1, bottom: 7.0 },
-    action: { size: 9.2, right: 14.0, bottom: 14.1 },
-    accelerate: { size: 11.5, right: 3.2, bottom: 5.0 },
-    brake: { size: 11.5, right: 15.4, bottom: 5.0 },
-    handbrake: { size: 7.2, right: 18.0, bottom: 17.5 },
-    fire: { size: 7.6, right: 3.2, top: 11.2 },
-    utility: { size: 5.8, gap: 1.5, right: 3.4, bottom: 2.0 },
-    radar: { size: 10.5, left: 2.0, top: 2.0 },
+
+    // Sized against a typical 800-900 x 430-500 landscape phone:
+    // joystick ~110-125px, action buttons ~58-65px,
+    // steering ~65-72px, pedals ~78-85px and utility ~38-42px.
+    joystick: { size: 24.5, knob: 10.5, left: 3.0, bottom: 4.0 },
+    steering: { size: 14.5, gap: 1.6, left: 3.0, bottom: 5.0 },
+    horn: { size: 8.5, left: 27.0, bottom: 21.0 },
+
+    sprint: { size: 13.0, right: 3.5, bottom: 13.5 },
+    action: { size: 13.0, right: 17.0, bottom: 28.0 },
+
+    accelerate: { size: 17.0, right: 3.5, bottom: 12.0 },
+    brake: { size: 17.0, right: 21.5, bottom: 12.0 },
+    handbrake: { size: 10.5, right: 35.0, bottom: 28.0 },
+
+    fire: { size: 11.0, right: 3.0, top: 12.0 },
+    utility: { size: 8.5, gap: 1.5, right: 2.5, bottom: 2.0 },
+
+    radar: { size: 15.0, left: 2.0, top: 2.0 },
     stats: { right: 2.2, top: 2.0 },
   };
 
