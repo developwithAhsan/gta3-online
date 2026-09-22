@@ -978,9 +978,11 @@ body.game-window-open{overflow:hidden}
 .mode-vehicle .on-foot-control{opacity:0!important;pointer-events:none!important;transform:translateY(6px)}
 .mode-vehicle .vehicle-control{opacity:var(--touch-opacity);pointer-events:auto;transform:none}
 .mode-vehicle .touch-steering{display:flex;opacity:1;transform:none}
+.mode-vehicle .vehicle-control.is-pressed{transform:scale(.90)}
 
 .touch-action-btn,
 .touch-fire-btn{z-index:3}
+.touch-fire-btn{border-radius:22%}
 .accelerate-btn,.brake-btn{z-index:2}
 .handbrake-btn,.horn-btn{z-index:3}
 
