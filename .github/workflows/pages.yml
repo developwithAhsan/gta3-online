@@ -73,6 +73,8 @@ jobs:
           grep -q 'gta3-touch-sensitivity-change' web/touch-controls.js
           grep -q 'sensitivityCurve' web/touch-controls.js
           grep -q 'styles.css?v=20260922-touch3' web/index.html
+          test -f web/google2a5cf9fe117640c7.html
+          grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
           grep -q 'joystick: 180' web/touch-controls.js
           grep -q 'accelerate: 116' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
