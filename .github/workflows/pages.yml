@@ -75,6 +75,10 @@ jobs:
           grep -q 'refreshLayout()' web/touch-controls.js
           grep -q 'Touch controls polish v3' web/styles.css
           grep -q 'SVG touch icon set v4' web/styles.css
+          grep -q 'Fully responsive touch HUD v5' web/styles.css
+          grep -q 'getPlayfieldRect' web/touch-controls.js
+          grep -q 'ResizeObserver' web/touch-controls.js
+          grep -q 'layoutMetrics' web/touch-controls.js
           grep -q 'touch-icon-run' web/touch-controls.js
           grep -q 'touch-icon-car' web/touch-controls.js
           grep -q 'touch-icon-gun' web/touch-controls.js
@@ -87,13 +91,13 @@ jobs:
           grep -q 'CHITTYCHITTYBB' web/game-toolbar.js
           grep -q 're3_BrowserApplyCheat' src/core/Pad.cpp
           grep -q 'sensitivityMagnitude' web/touch-controls.js
-          grep -q 'styles.css?v=20260922-icons4' web/index.html
+          grep -q 'styles.css?v=20260922-responsive5' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
           grep -q 'joystick: 180' web/touch-controls.js
           grep -q 'accelerate: 116' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
-          grep -q 'touch-controls.js?v=20260922-touch7' web/index.html
+          grep -q 'touch-controls.js?v=20260922-touch8' web/index.html
           grep -q 're3_BrowserTouchSet' src/core/Pad.cpp
           ! grep -R -i -E "webynize|wbnz-comments|widgets\.webynize\.com" web
           test "$(grep -o 'about-slide about-slide-' web/index.html | wc -l)" -eq 5
