@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  // Layout values are intentionally centralized here. Distances and sizes use
-  // vmin so the HUD scales consistently across portrait/landscape phones.
+  // Layout values are centralized here. They are logical short-side percentages;
+  // JavaScript converts them to clamped pixels using the ACTUAL game viewport,
+  // so controls stay usable on phones, tablets, Chromebooks, PCs and fullscreen.
   const TOUCH_CONFIG = {
     opacity: 0.66,
     transitionMs: 200,
@@ -31,8 +32,8 @@
     radar: { size: 15.0, left: 2.0, top: 2.0 },
     stats: { right: 2.2, top: 2.0 },
 
-    // Explicit desktop/Chromebook sizes prevent touch targets from becoming
-    // visually tiny in short or unusually proportioned PC browser windows.
+    // Baseline desktop targets. Responsive sizing may grow up to ~15% above
+    // these values on large displays and shrink safely on compact screens.
     desktopPx: {
       joystick: 180,
       joystickKnob: 78,
@@ -151,7 +152,69 @@
     </svg>`,
   };
 
-  const vmin = n => `${n}vmin`;
+  const layoutMetrics = {
+    width: Math.max(1, window.innerWidth || 1),
+    height: Math.max(1, window.innerHeight || 1),
+    short: Math.max(1, Math.min(window.innerWidth || 1, window.innerHeight || 1)),
+    portrait: (window.innerHeight || 1) > (window.innerWidth || 1),
+  };
+
+  const getPlayfieldRect = () => {
+    const viewport = document.getElementById("viewport");
+    const rect = viewport?.getBoundingClientRect?.();
+    if (rect && rect.width > 100 && rect.height > 100) return rect;
+
+    const gameWindow = document.getElementById("game-window");
+    const gameRect = gameWindow?.getBoundingClientRect?.();
+    if (gameRect && gameRect.width > 100 && gameRect.height > 100) return gameRect;
+
+    return {
+      left: 0,
+      top: 0,
+      width: Math.max(1, window.innerWidth || 1),
+      height: Math.max(1, window.innerHeight || 1),
+    };
+  };
+
+  const updateLayoutMetrics = root => {
+    const rect = getPlayfieldRect();
+    layoutMetrics.width = Math.max(1, rect.width);
+    layoutMetrics.height = Math.max(1, rect.height);
+    layoutMetrics.short = Math.max(1, Math.min(rect.width, rect.height));
+    layoutMetrics.portrait = rect.height > rect.width;
+
+    if (root) {
+      root.style.left = `${Math.round(rect.left)}px`;
+      root.style.top = `${Math.round(rect.top)}px`;
+      root.style.right = "auto";
+      root.style.bottom = "auto";
+      root.style.width = `${Math.round(rect.width)}px`;
+      root.style.height = `${Math.round(rect.height)}px`;
+      root.classList.toggle("touch-layout-portrait", layoutMetrics.portrait);
+      root.classList.toggle("touch-layout-landscape", !layoutMetrics.portrait);
+      root.classList.toggle("touch-layout-compact", layoutMetrics.short < 430);
+      root.classList.toggle("touch-layout-large", layoutMetrics.short >= 800);
+      root.style.setProperty("--touch-short-side", `${Math.round(layoutMetrics.short)}px`);
+    }
+  };
+
+  const layoutUnit = n => `${Math.round(layoutMetrics.short * (n / 100))}px`;
+  const vmin = layoutUnit;
+
+  const controlSize = (logicalSize, desktopPx) => {
+    const shortSide = layoutMetrics.short;
+    const portraitScale = layoutMetrics.portrait ? 0.94 : 1;
+    const compactBoost = shortSide < 430 ? 1.08 : shortSide < 560 ? 1.04 : 1;
+    const largeScale = shortSide > 900 ? 0.94 : 1;
+    const preferred = shortSide * (logicalSize / 100) * portraitScale * compactBoost * largeScale;
+
+    if (!desktopPx) return `${Math.round(preferred)}px`;
+
+    const minimum = Math.min(desktopPx * 0.60, shortSide * 0.32);
+    const maximum = desktopPx * 1.15;
+    return `${Math.round(Math.max(minimum, Math.min(maximum, preferred)))}px`;
+  };
+
   const clampSensitivity = value => Math.max(50, Math.min(200, Number(value) || 100));
   let touchSensitivity = (() => {
     try {
@@ -171,11 +234,6 @@
     if (!TOUCH_CONFIG.haptics || typeof navigator.vibrate !== "function") return;
     try { navigator.vibrate(8); } catch {}
   };
-  const isDesktopHUD = () =>
-    matchMedia("(hover:hover) and (pointer:fine)").matches ||
-    Math.min(window.innerWidth || 0, window.innerHeight || 0) >= 700;
-  const controlSize = (vminSize, desktopPx) =>
-    isDesktopHUD() && desktopPx ? `${desktopPx}px` : vmin(vminSize);
 
   class TouchBridge {
     constructor() {
@@ -490,6 +548,7 @@
       root.style.setProperty("--touch-transition", `${TOUCH_CONFIG.transitionMs}ms`);
       gameWindow.appendChild(root);
       this.root = root;
+      updateLayoutMetrics(root);
 
       // Informational HUD frames. The native GTA HUD remains visible through them.
       this.radar = document.createElement("div");
@@ -594,13 +653,31 @@
       window.addEventListener("gta3-touch-sensitivity-change", e => {
         touchSensitivity = clampSensitivity(e.detail?.value);
       });
-      window.addEventListener("resize", () => {
-        this.refreshVisibility();
-        this.refreshLayout();
-      });
-      window.addEventListener("orientationchange", () => {
-        window.setTimeout(() => this.refreshLayout(), 120);
-      });
+      const scheduleLayout = () => {
+        window.cancelAnimationFrame(this.layoutFrame || 0);
+        this.layoutFrame = window.requestAnimationFrame(() => {
+          this.refreshVisibility();
+          this.refreshLayout();
+        });
+      };
+
+      window.addEventListener("resize", scheduleLayout);
+      window.addEventListener("orientationchange", () => window.setTimeout(scheduleLayout, 120));
+      document.addEventListener("fullscreenchange", () => window.setTimeout(scheduleLayout, 60));
+      window.visualViewport?.addEventListener?.("resize", scheduleLayout);
+
+      const gameWindow = document.getElementById("game-window");
+      const viewport = document.getElementById("viewport");
+      if (typeof ResizeObserver === "function") {
+        this.resizeObserver = new ResizeObserver(scheduleLayout);
+        if (gameWindow) this.resizeObserver.observe(gameWindow);
+        if (viewport) this.resizeObserver.observe(viewport);
+      }
+      if (typeof MutationObserver === "function" && gameWindow) {
+        this.gameWindowObserver = new MutationObserver(() => window.setTimeout(scheduleLayout, 0));
+        this.gameWindowObserver.observe(gameWindow, { attributes:true, attributeFilter:["class","style"] });
+      }
+
       window.addEventListener("blur", () => this.resetAll());
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) this.resetAll();
@@ -612,13 +689,28 @@
     }
 
     refreshLayout() {
+      updateLayoutMetrics(this.root);
+
       this.joystick?.refreshLayout();
       this.steering?.refreshLayout();
 
-      const radarSize = controlSize(TOUCH_CONFIG.radar.size, TOUCH_CONFIG.desktopPx.radar);
       if (this.radar) {
+        const radarSize = controlSize(TOUCH_CONFIG.radar.size, TOUCH_CONFIG.desktopPx.radar);
         this.radar.style.width = radarSize;
         this.radar.style.height = radarSize;
+        this.radar.style.left = vmin(TOUCH_CONFIG.radar.left);
+        this.radar.style.top = vmin(TOUCH_CONFIG.radar.top);
+      }
+
+      if (this.stats) {
+        this.stats.style.right = vmin(TOUCH_CONFIG.stats.right);
+        this.stats.style.top = vmin(TOUCH_CONFIG.stats.top);
+      }
+
+      if (this.utility) {
+        this.utility.style.right = vmin(TOUCH_CONFIG.utility.right);
+        this.utility.style.bottom = vmin(TOUCH_CONFIG.utility.bottom);
+        this.utility.style.gap = vmin(TOUCH_CONFIG.utility.gap);
       }
 
       for (const button of [
@@ -714,5 +806,5 @@
     bootTouchHUD();
   }
 
-  window.GTA3TouchControls = { TOUCH_CONFIG, CONTROL };
+  window.GTA3TouchControls = { TOUCH_CONFIG, CONTROL, layoutMetrics, refreshLayout: updateLayoutMetrics };
 })();
