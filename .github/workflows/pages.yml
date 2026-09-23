@@ -102,6 +102,10 @@ jobs:
           grep -q 'styles.css?v=20260922-mobile7' web/index.html
           test -f web/google2a5cf9fe117640c7.html
           grep -q 'google-site-verification: google2a5cf9fe117640c7.html' web/google2a5cf9fe117640c7.html
+          test -f web/favicon.svg
+          grep -q 'favicon.svg?v=20260923-1' web/index.html
+          grep -q '<title>GTA 3 Online — Play Free in Browser | No Download</title>' web/index.html
+          grep -q 'GTA 3 online free in your browser with no download' web/index.html
           grep -q 'joystick: 196' web/touch-controls.js
           grep -q 'accelerate: 136' web/touch-controls.js
           grep -q 'enabledMode !== "off"' web/touch-controls.js
