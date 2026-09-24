@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": "web",
+  "rewrites": [
+    {
+      "source": "/build/:path*",
+      "destination": "https://developwithahsan.github.io/gta3-online/build/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/build/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
