@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://developwithahsan.github.io/gta3-online/sitemap.xml
