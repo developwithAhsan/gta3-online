@@ -20,10 +20,48 @@ const CORS = {
   "Cache-Control": "no-store",
 };
 
-function isHtml(response) {
-  return (response.headers.get("content-type") || "")
-    .toLowerCase()
-    .includes("text/html");
+async function readResponsePrefix(response, maxBytes = 256) {
+  const clone = response.clone();
+  const reader = clone.body?.getReader();
+  if (!reader) return new Uint8Array(0);
+  try {
+    const { value } = await reader.read();
+    if (!value) return new Uint8Array(0);
+    return value instanceof Uint8Array
+      ? value.subarray(0, maxBytes)
+      : new Uint8Array(value).subarray(0, maxBytes);
+  } finally {
+    try { await reader.cancel(); } catch {}
+  }
+}
+
+async function isHtmlResponse(response) {
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  if (contentType.includes("text/html")) return true;
+
+  const prefix = await readResponsePrefix(response, 256);
+  if (!prefix.length) return false;
+  const text = new TextDecoder().decode(prefix).replace(/^\uFEFF/, "").trimStart().toLowerCase();
+  return (
+    text.startsWith("<!doctype html") ||
+    text.startsWith("<html") ||
+    text.startsWith("<head") ||
+    text.startsWith("<body")
+  );
+}
+
+async function startsWithZip(response) {
+  const prefix = await readResponsePrefix(response, 4);
+  return (
+    prefix.length >= 4 &&
+    prefix[0] === 0x50 &&
+    prefix[1] === 0x4b &&
+    (
+      (prefix[2] === 0x03 && prefix[3] === 0x04) ||
+      (prefix[2] === 0x05 && prefix[3] === 0x06) ||
+      (prefix[2] === 0x07 && prefix[3] === 0x08)
+    )
+  );
 }
 
 function decodeHtml(value) {
@@ -35,21 +73,28 @@ function decodeHtml(value) {
     .replace(/&gt;/g, ">");
 }
 
+function readHtmlAttribute(tag, name) {
+  const re = new RegExp(name + "\\s*=\\s*[\"']([^\"']*)[\"']", "i");
+  const match = tag.match(re);
+  return match ? decodeHtml(match[1]) : "";
+}
+
 function parseDownloadForm(html) {
-  const formMatch = html.match(
-    /<form[^>]+action=["']([^"']+)["'][^>]*>([\s\S]*?)<\/form>/i,
-  );
+  const formMatch = html.match(/<form\b([^>]*)>([\s\S]*?)<\/form>/i);
   if (!formMatch) return null;
 
-  const action = decodeHtml(formMatch[1]);
-  const body = formMatch[2];
-  const url = new URL(action);
+  const action = readHtmlAttribute(formMatch[1], "action");
+  if (!action) return null;
 
-  const inputRe =
-    /<input[^>]+name=["']([^"']+)["'][^>]+value=["']([^"']*)["'][^>]*>/gi;
+  const url = new URL(action, "https://drive.usercontent.google.com/");
+  const body = formMatch[2];
+  const inputRe = /<input\b[^>]*>/gi;
   let match;
   while ((match = inputRe.exec(body))) {
-    url.searchParams.set(decodeHtml(match[1]), decodeHtml(match[2]));
+    const tag = match[0];
+    const name = readHtmlAttribute(tag, "name");
+    if (!name) continue;
+    url.searchParams.set(name, readHtmlAttribute(tag, "value"));
   }
 
   if (!url.searchParams.has("id")) url.searchParams.set("id", FILE_ID);
@@ -57,6 +102,23 @@ function parseDownloadForm(html) {
   if (!url.searchParams.has("confirm")) url.searchParams.set("confirm", "t");
 
   return url.toString();
+}
+
+function parseDownloadLink(html) {
+  const linkRe = /<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = linkRe.exec(html))) {
+    const href = decodeHtml(match[1]);
+    if (!/download|confirm=|export=download/i.test(href)) continue;
+    try {
+      const url = new URL(href, "https://drive.usercontent.google.com/");
+      if (!url.searchParams.has("id")) url.searchParams.set("id", FILE_ID);
+      if (!url.searchParams.has("export")) url.searchParams.set("export", "download");
+      if (!url.searchParams.has("confirm")) url.searchParams.set("confirm", "t");
+      return url.toString();
+    } catch {}
+  }
+  return null;
 }
 
 function totalFromContentRange(value) {
@@ -110,13 +172,18 @@ async function fetchDriveFile(range = null) {
   // parameters copied from one browser session.
   let response = await rawFetch(BASE_DOWNLOAD_URL, range);
 
-  if (!isHtml(response)) return response;
+  if (!(await isHtmlResponse(response))) {
+    if (!range && !(await startsWithZip(response))) {
+      throw new Error("Google Drive returned binary data that is not a ZIP archive.");
+    }
+    return response;
+  }
 
-  // Google Drive often returns a small virus-scan warning page for large files.
-  // Parse its "Download anyway" form and make the second request server-side.
+  // Google Drive can label its virus-scan confirmation page as
+  // application/octet-stream, so inspect the body rather than trusting MIME type.
   const cookie = forwardCookie(response);
   const html = await response.text();
-  const confirmedUrl = parseDownloadForm(html);
+  const confirmedUrl = parseDownloadForm(html) || parseDownloadLink(html);
 
   if (!confirmedUrl) {
     const lower = html.toLowerCase();
@@ -133,23 +200,34 @@ async function fetchDriveFile(range = null) {
       throw new Error("Google Drive download quota has been exceeded.");
     }
     throw new Error(
-      "Google Drive returned HTML but no Download anyway form was found.",
+      "Google Drive returned a confirmation page but no usable download URL was found.",
     );
   }
 
   response = await rawFetch(confirmedUrl, range, cookie);
 
-  if (isHtml(response)) {
+  if (await isHtmlResponse(response)) {
     const secondHtml = await response.text();
-    if (
-      secondHtml.toLowerCase().includes("quota") ||
-      secondHtml.toLowerCase().includes("too many users")
-    ) {
+    const lower = secondHtml.toLowerCase();
+    if (lower.includes("quota") || lower.includes("too many users")) {
       throw new Error("Google Drive download quota has been exceeded.");
+    }
+    if (
+      lower.includes("sign in") ||
+      lower.includes("request access") ||
+      lower.includes("you need access")
+    ) {
+      throw new Error(
+        'Google Drive file is not publicly downloadable. Set sharing to "Anyone with the link".',
+      );
     }
     throw new Error(
       "Google Drive still returned HTML after the confirmation request.",
     );
+  }
+
+  if (!range && !(await startsWithZip(response))) {
+    throw new Error("Confirmed Google Drive response is not a ZIP archive.");
   }
 
   return response;
